@@ -1,0 +1,8 @@
+# 依赖与构建产物
+node_modules
+dist
+.turbo
+
+# Vite dev harness 输出（example/ 独立运行）
+example/dist
+.vite

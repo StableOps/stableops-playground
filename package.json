@@ -1,0 +1,71 @@
+{
+  "name": "@stableops/playground",
+  "version": "0.0.1",
+  "private": false,
+  "description": "Embeddable React playground for the StableOps payment flow — create an order, pay on-chain with a wallet, and watch it confirm, all in the browser.",
+  "keywords": [
+    "stableops",
+    "playground",
+    "react",
+    "stablecoin",
+    "usdc",
+    "usdt",
+    "payment",
+    "web3"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StableOps/stableops-playground.git"
+  },
+  "homepage": "https://stableops.dev",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc",
+    "prepublishOnly": "pnpm build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@stableops/api-sdk": "workspace:*",
+    "@stableops/wallet-sdk": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "@stableops/config": "workspace:*",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.16.0",
+    "globals": "^15.14.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.18.0",
+    "vite": "^7.3.3",
+    "vitest": "^3.2.4"
+  }
+}
