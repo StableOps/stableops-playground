@@ -119,10 +119,11 @@ const messages = {
       walletFailed: 'wallet payment failed: {message}',
       providerNotFound: 'wallet provider not found for {chain}',
       waitTimedOut: 'wait {target} timed out; try again later',
-      manualConfirmed: 'manual transfer confirmed; polling for on-chain detection',
+      manualConfirmed:
+        'manual transfer confirmed; polling for on-chain detection',
     },
     footer:
-      'This playground calls the StableOps API directly from your browser with the API key you provide (<code>@stableops/api-sdk</code>). Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I\'ve sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser.',
+      'This playground calls the StableOps API directly from your browser with the API key you provide (<code>@stableops/api-sdk</code>). Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I\'ve sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.',
   },
   zh: {
     steps: {
@@ -162,8 +163,7 @@ const messages = {
       hint: '开启时会在建单前为本订单导入一个确定性 burner sandbox 地址——适合 org 还没有任何收款地址的场景。如果你只想使用自己管理的地址，请关闭。',
     },
     noAddress: {
-      banner:
-        '已关闭自动导入。请确保你的 sandbox org 至少有一个收款地址——可在',
+      banner: '已关闭自动导入。请确保你的 sandbox org 至少有一个收款地址——可在',
       dashboardLink: 'Dashboard → 收款地址',
       hint: '提示：如果建单失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
     },
@@ -189,7 +189,7 @@ const messages = {
       manualConfirmed: '已确认手动转账；开始等待链上检测',
     },
     footer:
-      '本 playground 直接在浏览器里用你提供的 API Key 调 StableOps API（<code>@stableops/api-sdk</code>）；第 2 步调用 <code>@stableops/wallet-sdk</code> 让浏览器钱包发送真实测试网交易；也可以不走钱包，从任意钱包/交易所向显示的地址转账后点击「我已手动转账」。订单进入 detected / confirmed / finalized 依赖 scanner 与 confirmations watcher。在 sandbox（测试网）下，若你的 org 还没有收款地址，会自动为本订单创建一个随机地址。请仅使用 sandbox key —— 切勿在浏览器中粘贴生产 key。',
+      '本 playground 直接在浏览器里用你提供的 API Key 调 StableOps API（<code>@stableops/api-sdk</code>）；第 2 步调用 <code>@stableops/wallet-sdk</code> 让浏览器钱包发送真实测试网交易；也可以不走钱包，从任意钱包/交易所向显示的地址转账后点击「我已手动转账」。订单进入 detected / confirmed / finalized 依赖 scanner 与 confirmations watcher。在 sandbox（测试网）下，若你的 org 还没有收款地址，会自动为本订单创建一个随机地址。请仅使用 sandbox key —— 切勿在浏览器中粘贴生产 key。<a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">在 GitLab 查看源码</a>。',
   },
 } satisfies Record<Locale, Record<string, unknown>>
 
@@ -692,7 +692,10 @@ export function Playground({
         <div className="space-y-3 rounded-lg border bg-background/50 p-4">
           <div className="text-sm font-medium">{msg.manual.heading}</div>
           {order.paymentInstructions.map((instruction) => (
-            <div key={`${instruction.chain}:${instruction.address}`} className="space-y-1.5">
+            <div
+              key={`${instruction.chain}:${instruction.address}`}
+              className="space-y-1.5"
+            >
               <div className="text-xs text-muted-foreground">
                 {tpl(msg.manual.sendTo, {
                   amount: order.amount,
@@ -789,7 +792,10 @@ function CopyButton({
 }
 
 // 用测试网目录把链 id 渲染成可读标签，找不到则回落到链 id 本身。
-function chainLabel(options: readonly PlaygroundTestnet[], chain: string): string {
+function chainLabel(
+  options: readonly PlaygroundTestnet[],
+  chain: string,
+): string {
   return options.find((option) => option.chain === chain)?.label ?? chain
 }
 
