@@ -395,7 +395,6 @@ export function Playground({
         {
           merchantOrderId,
           amount,
-          settlementAsset: primaryOption.asset,
           acceptedAssets: selectedOptions.map((o) => ({
             chain: o.chain,
             asset: o.asset,
