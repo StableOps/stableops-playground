@@ -400,7 +400,6 @@ export function Playground({
             chain: o.chain,
             asset: o.asset,
           })),
-          scenario: 'generic',
           // 30 分钟后未支付自动过期，order-expiration worker 推进到 expired 并释放地址。
           expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         },
