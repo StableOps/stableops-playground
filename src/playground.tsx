@@ -7,9 +7,10 @@ import {
   getInjectedWalletProviders,
   selectWalletPaymentInstruction,
   sendWalletPayment,
+  setWalletSdkDebug,
   type WalletPaymentInstruction,
 } from '@stableops/wallet-sdk'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Badge, Button, cn, Input, Label, MultiSelect } from './ui'
 import { importSandboxAddress } from './sandbox-address'
@@ -120,7 +121,7 @@ const messages = {
         'manual transfer confirmed; polling for on-chain detection',
     },
     footer:
-      'This playground calls the StableOps API directly from your browser with the API key you provide (<code>@stableops/api-sdk</code>). Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I\'ve sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.',
+      'This playground calls <code>@stableops/api-sdk</code> directly from your browser with the API key you provide. Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I\'ve sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.',
   },
   zh: {
     steps: {
@@ -147,7 +148,7 @@ const messages = {
       sendTo: '在 {chain} 上向以下地址转账 {amount} {asset}：',
       copy: '复制',
       copied: '已复制',
-      hint: '从任意钱包或交易所转账后，点击「我已手动转账」——scanner 会以同样方式检测到这笔入金。',
+      hint: '从任意钱包或交易所转账后，点击「我已手动转账」，scanner 会以同样方式检测到这笔入金。',
       done: '已确认手动转账',
     },
     apiKey: {
@@ -157,7 +158,7 @@ const messages = {
     },
     autoImport: {
       label: '自动导入 sandbox 收款地址',
-      hint: '开启时会在建单前为本订单导入一个确定性 burner sandbox 地址——适合 org 还没有任何收款地址的场景。如果你只想使用自己管理的地址，请关闭。',
+      hint: '开启时会在建单前为本订单导入一个确定性 burner 地址，适合 org 还没有任何收款地址的场景。如果你只想使用自己管理的地址，请关闭。',
     },
     noAddress: {
       banner: '已关闭自动导入。请确保你的 sandbox org 至少有一个收款地址——可在',
@@ -186,7 +187,7 @@ const messages = {
       manualConfirmed: '已确认手动转账；开始等待链上检测',
     },
     footer:
-      '本 playground 直接在浏览器里用你提供的 API Key 调 StableOps API（<code>@stableops/api-sdk</code>）；第 2 步调用 <code>@stableops/wallet-sdk</code> 让浏览器钱包发送真实测试网交易；也可以不走钱包，从任意钱包/交易所向显示的地址转账后点击「我已手动转账」。订单进入 detected / confirmed / finalized 依赖 scanner 与 confirmations watcher。在 sandbox（测试网）下，若你的 org 还没有收款地址，会自动为本订单创建一个随机地址。请仅使用 sandbox key —— 切勿在浏览器中粘贴生产 key。<a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">在 GitLab 查看源码</a>。',
+      '本 playground 直接在浏览器里用你提供的 API Key 调 <code>@stableops/api-sdk</code>；第 2 步调用 <code>@stableops/wallet-sdk</code> 让浏览器钱包发送真实测试网交易；也可以不走钱包，从任意钱包/交易所向显示的地址转账后点击「我已手动转账」。订单进入 detected / confirmed / finalized 依赖 scanner 与 confirmations watcher。在 sandbox 下，若你的 org 还没有收款地址，会自动为本订单创建一个随机地址。请仅使用 sandbox key，切勿在浏览器中粘贴生产 key。<a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">在 GitLab 查看源码</a>。',
   },
 } satisfies Record<Locale, Record<string, unknown>>
 
@@ -263,6 +264,12 @@ export function Playground({
       ...prev,
       `${new Date().toISOString().slice(11, 19)}  ${line}`,
     ])
+  }, [])
+
+  // playground 默认开启 wallet-sdk 调试日志：挂载即打开，钱包支付全过程在控制台输出 [wallet-sdk] …，
+  // 便于排查支付失败。这是个面向开发者的演练场，默认开 debug 比藏开关更有用。
+  useEffect(() => {
+    setWalletSdkDebug(true)
   }, [])
 
   const updateStep = useCallback((index: number, patch: Partial<Step>) => {
