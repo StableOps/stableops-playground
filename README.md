@@ -71,7 +71,6 @@ client component (a file with `"use client"`).
 | `apiKey`           | `string`              | —                           | Default API key. The widget also exposes an input so users can paste/override their own.  |
 | `baseUrl`          | `string`              | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS. |
 | `environment`      | `'sandbox' \| 'live'` | `'sandbox'`                 | Used for the request header and copy only; the key's environment is authoritative.        |
-| `organizationSlug` | `string`              | —                           | Optional org slug header (ignored when authenticating with an API key).                   |
 | `locale`           | `'en' \| 'zh'`        | `'en'`                      | UI language.                                                                              |
 | `className`        | `string`              | —                           | Extra classes for the root container.                                                     |
 

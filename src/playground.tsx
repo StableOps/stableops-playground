@@ -28,7 +28,6 @@ export type PlaygroundProps = {
   baseUrl?: string
   // 仅用于请求头与文案；真实环境以 API Key 为准。
   environment?: 'sandbox' | 'live'
-  organizationSlug?: string
   locale?: 'en' | 'zh'
   className?: string
 }
@@ -201,7 +200,6 @@ export function Playground({
   apiKey: apiKeyProp,
   baseUrl = DEFAULT_BASE_URL,
   environment = 'sandbox',
-  organizationSlug,
   locale: localeProp = 'en',
   className,
 }: PlaygroundProps) {
@@ -219,10 +217,9 @@ export function Playground({
             apiKey: trimmedKey,
             baseUrl,
             environment,
-            organizationSlug,
           })
         : null,
-    [trimmedKey, baseUrl, environment, organizationSlug],
+    [trimmedKey, baseUrl, environment],
   )
 
   // 下拉框直接用包内的测试网目录（自包含），不依赖任何 playground 专用端点。

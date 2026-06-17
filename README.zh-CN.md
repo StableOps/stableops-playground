@@ -63,7 +63,6 @@ export function Demo() {
 | `apiKey`           | `string`              | —                           | 默认 API key。组件同时提供输入框，用户可粘贴/覆盖自己的 key。   |
 | `baseUrl`          | `string`              | `https://api.stableops.dev` | StableOps API base URL，需浏览器可达且在 API 的 CORS 白名单内。 |
 | `environment`      | `'sandbox' \| 'live'` | `'sandbox'`                 | 仅用于请求头与文案；真实环境以 key 为准。                       |
-| `organizationSlug` | `string`              | —                           | 可选 org slug 头（用 API key 鉴权时被忽略）。                   |
 | `locale`           | `'en' \| 'zh'`        | `'en'`                      | 界面语言。                                                      |
 | `className`        | `string`              | —                           | 根容器额外类名。                                                |
 
