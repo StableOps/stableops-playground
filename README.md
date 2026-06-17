@@ -34,7 +34,7 @@ the StableOps API from the browser, so:
 - **Use a sandbox key only.** Never embed a live key in browser code.
 - The API key's environment is authoritative — the StableOps API resolves the
   organization and environment from the key, so a sandbox key always runs
-  against sandbox regardless of the `environment` prop.
+  against sandbox.
 - In production integrations, keep your API key on your backend and use
   `@stableops/wallet-sdk` on the frontend only for the wallet transfer.
 
@@ -70,7 +70,6 @@ client component (a file with `"use client"`).
 | ------------------ | --------------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
 | `apiKey`           | `string`              | —                           | Default API key. The widget also exposes an input so users can paste/override their own.  |
 | `baseUrl`          | `string`              | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS. |
-| `environment`      | `'sandbox' \| 'live'` | `'sandbox'`                 | Used for the request header and copy only; the key's environment is authoritative.        |
 | `locale`           | `'en' \| 'zh'`        | `'en'`                      | UI language.                                                                              |
 | `className`        | `string`              | —                           | Extra classes for the root container.                                                     |
 

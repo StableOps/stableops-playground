@@ -26,8 +26,6 @@ export type PlaygroundProps = {
   apiKey?: string
   // StableOps API base，浏览器需可达。默认公网 API。
   baseUrl?: string
-  // 仅用于请求头与文案；真实环境以 API Key 为准。
-  environment?: 'sandbox' | 'live'
   locale?: 'en' | 'zh'
   className?: string
 }
@@ -199,7 +197,6 @@ function tpl(template: string, vars: Record<string, string>): string {
 export function Playground({
   apiKey: apiKeyProp,
   baseUrl = DEFAULT_BASE_URL,
-  environment = 'sandbox',
   locale: localeProp = 'en',
   className,
 }: PlaygroundProps) {
@@ -216,10 +213,9 @@ export function Playground({
         ? new StableOps({
             apiKey: trimmedKey,
             baseUrl,
-            environment,
           })
         : null,
-    [trimmedKey, baseUrl, environment],
+    [trimmedKey, baseUrl],
   )
 
   // 下拉框直接用包内的测试网目录（自包含），不依赖任何 playground 专用端点。
@@ -380,7 +376,6 @@ export function Playground({
           await importSandboxAddress({
             apiKey: trimmedKey,
             baseUrl,
-            environment,
             merchantOrderId,
             chains: selectedOptions.map((o) => String(o.chain)),
           })
@@ -426,7 +421,6 @@ export function Playground({
     client,
     trimmedKey,
     baseUrl,
-    environment,
     autoImportAddress,
     amount,
     selectedOptions,

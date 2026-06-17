@@ -27,7 +27,7 @@
 
 - **只使用 sandbox key。** 切勿在浏览器代码中嵌入生产 key。
 - API key 的环境是权威值 —— StableOps API 按 key 解析组织与环境，所以 sandbox key
-  始终运行在 sandbox，与 `environment` prop 无关。
+  始终运行在 sandbox。
 - 在生产集成里，请把 API key 放在后端，前端只用 `@stableops/wallet-sdk` 完成钱包转账。
 
 ## 安装
@@ -62,7 +62,6 @@ export function Demo() {
 | ------------------ | --------------------- | --------------------------- | --------------------------------------------------------------- |
 | `apiKey`           | `string`              | —                           | 默认 API key。组件同时提供输入框，用户可粘贴/覆盖自己的 key。   |
 | `baseUrl`          | `string`              | `https://api.stableops.dev` | StableOps API base URL，需浏览器可达且在 API 的 CORS 白名单内。 |
-| `environment`      | `'sandbox' \| 'live'` | `'sandbox'`                 | 仅用于请求头与文案；真实环境以 key 为准。                       |
 | `locale`           | `'en' \| 'zh'`        | `'en'`                      | 界面语言。                                                      |
 | `className`        | `string`              | —                           | 根容器额外类名。                                                |
 

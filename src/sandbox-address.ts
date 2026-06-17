@@ -66,7 +66,6 @@ export async function demoSandboxAddressForChain(chain: ChainId, seed: string): 
 export type ImportSandboxAddressInput = {
   apiKey: string
   baseUrl: string
-  environment: string
   merchantOrderId: string
   chains: string[]
   fetchImpl?: typeof fetch
@@ -88,7 +87,6 @@ export async function importSandboxAddress(input: ImportSandboxAddressInput): Pr
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${input.apiKey}`,
-        'x-stableops-env': input.environment,
       },
       body: JSON.stringify({
         addresses: [{ chain, address, label: `playground-${input.merchantOrderId}` }],
