@@ -4,6 +4,11 @@ import { StableOps, StableOpsError } from '@stableops/api-sdk'
 import type { PaymentOrder, PaymentOrderInstruction } from '@stableops/api-sdk'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 import {
+  isAcceptedOrderStatus,
+  isFailedTerminalOrderStatus,
+  type WaitTarget,
+} from './order-status'
+import {
   getInjectedWalletProviders,
   selectWalletPaymentInstruction,
   sendWalletPayment,
@@ -43,10 +48,6 @@ type Step = {
 }
 
 const POLL_INTERVAL_MS = 5_000
-// detected 接受 detected 及其后续（confirmed/finalized 已越过 detected）；逐级是其超集。
-const detectedStatuses = new Set(['detected', 'confirmed', 'finalized'])
-const confirmedStatuses = new Set(['confirmed', 'finalized'])
-const finalizedStatuses = new Set(['finalized'])
 const DEFAULT_BASE_URL = 'https://api.stableops.dev'
 
 type Locale = 'en' | 'zh'
@@ -106,6 +107,7 @@ const messages = {
       walletProviderNotFound: 'wallet provider not found',
       waitingWallet: 'waiting for wallet confirmation…',
       txHash: 'tx {hash}',
+      terminalStatus: 'order reached {status} before {target}',
     },
     log: {
       missingKey: 'create failed: API key is required',
@@ -117,6 +119,7 @@ const messages = {
       walletFailed: 'wallet payment failed: {message}',
       providerNotFound: 'wallet provider not found for {chain}',
       waitTimedOut: 'wait {target} timed out; try again later',
+      waitTerminalStatus: 'wait {target} stopped: order status is {status}',
       manualConfirmed:
         'manual transfer confirmed; polling for on-chain detection',
     },
@@ -173,6 +176,7 @@ const messages = {
       walletProviderNotFound: '未找到钱包 provider',
       waitingWallet: '等待钱包确认…',
       txHash: 'tx {hash}',
+      terminalStatus: '订单在到达 {target} 前已进入 {status}',
     },
     log: {
       missingKey: 'create failed: 需要先填写 API key',
@@ -184,6 +188,7 @@ const messages = {
       walletFailed: 'wallet payment failed: {message}',
       providerNotFound: 'wallet provider not found for {chain}',
       waitTimedOut: 'wait {target} timed out; try again later',
+      waitTerminalStatus: 'wait {target} stopped: order status is {status}',
       manualConfirmed: '已确认手动转账；开始等待链上检测',
     },
     footer:
@@ -301,17 +306,8 @@ export function Playground({
   )
 
   const waitForOrderStatus = useCallback(
-    async (
-      target: 'detected' | 'confirmed' | 'finalized',
-      index: number,
-    ): Promise<boolean> => {
+    async (target: WaitTarget, index: number): Promise<boolean> => {
       if (!order) return false
-      const accepted =
-        target === 'detected'
-          ? detectedStatuses
-          : target === 'confirmed'
-            ? confirmedStatuses
-            : finalizedStatuses
       // 超时按所选链 + 目标推导，而非固定值：detected 近实时给小预算；慢链(如 ethereum-sepolia
       // finalize)给到分钟级；快链(arbitrum / solana)不必空等。多选时取所有选中链的最大预算，
       // 因为事先不知道用户实际会用哪条链支付。
@@ -335,12 +331,20 @@ export function Playground({
           const fresh = await refreshOrder(order.id)
           const status = fresh?.status ?? 'unknown'
           append(tpl(msg.log.orderStatus, { status }))
-          if (accepted.has(status)) {
+          if (isAcceptedOrderStatus(target, status)) {
             updateStep(index, {
               status: 'done',
               detail: tpl(msg.status.orderStatus, { status }),
             })
             return true
+          }
+          if (isFailedTerminalOrderStatus(status)) {
+            updateStep(index, {
+              status: 'error',
+              detail: tpl(msg.status.terminalStatus, { target, status }),
+            })
+            append(tpl(msg.log.waitTerminalStatus, { target, status }))
+            return false
           }
           await sleep(POLL_INTERVAL_MS)
         }
