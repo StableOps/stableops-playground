@@ -66,12 +66,12 @@ client component (a file with `"use client"`).
 
 ## Props
 
-| Prop               | Type                  | Default                     | Description                                                                               |
-| ------------------ | --------------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
-| `apiKey`           | `string`              | —                           | Default API key. The widget also exposes an input so users can paste/override their own.  |
-| `baseUrl`          | `string`              | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS. |
-| `locale`           | `'en' \| 'zh'`        | `'en'`                      | UI language.                                                                              |
-| `className`        | `string`              | —                           | Extra classes for the root container.                                                     |
+| Prop        | Type           | Default                     | Description                                                                               |
+| ----------- | -------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
+| `apiKey`    | `string`       | —                           | Default API key. The widget also exposes an input so users can paste/override their own.  |
+| `baseUrl`   | `string`       | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS. |
+| `locale`    | `'en' \| 'zh'` | `'en'`                      | UI language.                                                                              |
+| `className` | `string`       | —                           | Extra classes for the root container.                                                     |
 
 The widget also exposes an **Auto-import sandbox receiving address** checkbox in
 its UI (on by default). When on, it imports a deterministic burner sandbox
@@ -104,7 +104,7 @@ pnpm dev
 ```
 
 It serves the page from `example/` (default http://localhost:5173). Point it at a
-different API with `VITE_STABLEOPS_API_URL` (defaults to `http://localhost:3001`),
+different API with `VITE_STABLEOPS_API_URL` (defaults to `https://api.stableops.dev`),
 then paste a sandbox API key in the UI.
 
 ## License
