@@ -595,7 +595,7 @@ export function Playground({
             ? '真实钱包交易，使用所选测试网；不要用主网资金。领测试币：'
             : 'Real wallet transaction on the selected testnet(s) — do not use mainnet funds. Get test funds: '}
           {selectedOptions.map((option, i) => (
-            <span key={option.chain}>
+            <span key={`${option.chain}:${option.asset}`}>
               {i > 0 ? ' · ' : ''}
               <a
                 href={option.faucetUrl}
