@@ -101,6 +101,14 @@ const messages = {
       // 建单失败 + auto-import 关 时追加到日志里的兜底提示。
       hint: 'tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.',
     },
+    dropped: {
+      nonEvmOnly:
+        'TRON and Solana are only available on paid plans. Please select EVM chains.',
+      nonEvmMix:
+        'The following chains are only available on paid plans. Please deselect: {chains}',
+      fallback:
+        'Enable Auto-import or configure receiving addresses in the Dashboard.',
+    },
     status: {
       missingKey: 'enter an API key first',
       polling: 'polling {target}… (up to {seconds}s)',
@@ -170,6 +178,11 @@ const messages = {
       banner: '已关闭自动导入。请确保你的 sandbox org 至少有一个收款地址——可在',
       dashboardLink: 'Dashboard → 收款地址',
       hint: '提示：如果建单失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
+    },
+    dropped: {
+      nonEvmOnly: 'TRON 和 Solana 只有付费套餐才可用，请选择 EVM 链。',
+      nonEvmMix: '以下链仅付费套餐可用，请取消选择：{chains}',
+      fallback: '请开启「自动导入」或前往控制台配置收款地址。',
     },
     status: {
       missingKey: '请先填写 API key',
@@ -416,6 +429,34 @@ export function Playground({
         },
         { idempotencyKey: merchantOrderId },
       )
+      // 先检测被静默丢弃的链（无可用收款地址），失败则不 setOrder 阻断后续。
+      const allocatedChains = new Set(
+        created.paymentInstructions.map((pi) => pi.chain),
+      )
+      const dropped = selectedOptions.filter(
+        (opt) => !allocatedChains.has(opt.chain),
+      )
+      if (dropped.length > 0) {
+        const nonEvm = dropped.filter((opt) => opt.family !== 'evm')
+        const hasEvmAllocated = selectedOptions.some(
+          (opt) => opt.family === 'evm' && allocatedChains.has(opt.chain),
+        )
+        if (nonEvm.length === dropped.length && !hasEvmAllocated) {
+          updateStep(0, { status: 'error', detail: msg.dropped.nonEvmOnly })
+          append(msg.dropped.nonEvmOnly)
+        } else if (nonEvm.length > 0 && hasEvmAllocated) {
+          const sep = locale === 'zh' ? '、' : ', '
+          const detail = tpl(msg.dropped.nonEvmMix, {
+            chains: nonEvm.map((o) => o.label).join(sep),
+          })
+          updateStep(0, { status: 'error', detail })
+          append(detail)
+        } else {
+          updateStep(0, { status: 'error', detail: msg.dropped.fallback })
+          append(msg.dropped.fallback)
+        }
+        return
+      }
       setOrder(created)
       const instructionCount = created.paymentInstructions.length
       const primary = created.paymentInstructions[0]
@@ -430,10 +471,29 @@ export function Playground({
       )
     } catch (err) {
       const message = errMessage(err)
-      updateStep(0, { status: 'error', detail: message })
-      append(tpl(msg.log.createFailed, { error: message }))
-      // 开关关 + 建单失败：补一条提示——大概率是 org 没有可分配的收款地址。
-      if (!autoImportAddress) append(msg.noAddress.hint)
+      // API 建单失败可能是免费套餐无可用地址，映射为友好提示。
+      if (/no available address/i.test(message)) {
+        const nonEvm = selectedOptions.filter((o) => o.family !== 'evm')
+        const hasEvm = selectedOptions.some((o) => o.family === 'evm')
+        if (nonEvm.length === selectedOptions.length) {
+          append(msg.dropped.nonEvmOnly)
+          updateStep(0, { status: 'error', detail: msg.dropped.nonEvmOnly })
+        } else if (nonEvm.length > 0 && hasEvm) {
+          const sep = locale === 'zh' ? '、' : ', '
+          const detail = tpl(msg.dropped.nonEvmMix, {
+            chains: nonEvm.map((o) => o.label).join(sep),
+          })
+          append(detail)
+          updateStep(0, { status: 'error', detail })
+        } else {
+          append(msg.dropped.fallback)
+          updateStep(0, { status: 'error', detail: msg.dropped.fallback })
+        }
+      } else {
+        updateStep(0, { status: 'error', detail: message })
+        append(tpl(msg.log.createFailed, { error: message }))
+        if (!autoImportAddress) append(msg.noAddress.hint)
+      }
     } finally {
       setBusy(null)
     }
