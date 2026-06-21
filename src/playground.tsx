@@ -241,7 +241,7 @@ export function Playground({
   const [amount, setAmount] = useState('0.01')
   // 多选链：建单时每个选中链生成一条 acceptedAssets / 一个收款地址，订单返回多条
   // paymentInstructions，用户用任意一条链支付即可。
-  const [chains, setChains] = useState<DemoChain[]>(['base-sepolia'])
+  const [chains, setChains] = useState<DemoChain[]>(['base-sepolia:USDC'])
   // 自动导入 sandbox 收款地址：默认开启；关闭时改用 org 已有地址，并在 UI / 失败日志里提示如何补救。
   const [autoImportAddress, setAutoImportAddress] = useState(true)
   const [order, setOrder] = useState<PaymentOrder | null>(null)
@@ -252,7 +252,12 @@ export function Playground({
   // 选中的测试网（按选择顺序）；为空时回落到目录首项，避免 Math.max(...[]) / 取 asset 出错。
   const selectedOptions: PlaygroundTestnet[] = useMemo(() => {
     const picked = chains
-      .map((c) => chainOptions.find((option) => option.chain === c))
+      .map((composite) => {
+        const [chain, asset] = composite.split(':')
+        return chainOptions.find(
+          (option) => option.chain === chain && option.asset === asset,
+        )
+      })
       .filter((option): option is PlaygroundTestnet => Boolean(option))
     return picked.length > 0 ? picked : [chainOptions[0]]
   }, [chains, chainOptions])
@@ -544,9 +549,8 @@ export function Playground({
             <MultiSelect
               id="playground-chain"
               options={chainOptions.map((option) => ({
-                value: option.chain,
+                value: `${option.chain}:${option.asset}`,
                 label: option.label,
-                key: `${option.chain}:${option.asset}`,
               }))}
               value={chains}
               onChange={(next) => setChains(next as DemoChain[])}
