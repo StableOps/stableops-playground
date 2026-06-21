@@ -45,6 +45,8 @@ type Step = {
   label: string
   status: 'idle' | 'pending' | 'done' | 'error'
   detail?: string
+  // 可选的跳转链接（如第 2 步支付成功后的区块浏览器交易页）。
+  link?: { href: string; label: string }
 }
 
 const POLL_INTERVAL_MS = 5_000
@@ -107,6 +109,7 @@ const messages = {
       walletProviderNotFound: 'wallet provider not found',
       waitingWallet: 'waiting for wallet confirmation…',
       txHash: 'tx {hash}',
+      viewTx: 'View on block explorer ↗',
       terminalStatus: 'order reached {status} before {target}',
     },
     log: {
@@ -176,6 +179,7 @@ const messages = {
       walletProviderNotFound: '未找到钱包 provider',
       waitingWallet: '等待钱包确认…',
       txHash: 'tx {hash}',
+      viewTx: '在区块浏览器查看 ↗',
       terminalStatus: '订单在到达 {target} 前已进入 {status}',
     },
     log: {
@@ -481,9 +485,12 @@ export function Playground({
             ? 'https://api.devnet.solana.com'
             : undefined,
       })
+      // 用所支付链的区块浏览器拼出交易详情页链接，方便用户点开核对这笔链上转账。
+      const txUrl = explorerTxUrl(selected.instruction.chain, sent.txHash)
       updateStep(1, {
         status: 'done',
         detail: tpl(msg.status.txHash, { hash: sent.txHash }),
+        link: txUrl ? { href: txUrl, label: msg.status.viewTx } : undefined,
       })
       append(tpl(msg.log.walletSent, { hash: sent.txHash }))
       await refreshOrder(order.id)
@@ -736,6 +743,16 @@ export function Playground({
               {step.detail ? (
                 <div className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
                   {step.detail}
+                  {step.link ? (
+                    <a
+                      href={step.link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-2 inline-block text-xs underline underline-offset-2"
+                    >
+                      {step.link.label}
+                    </a>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -802,6 +819,25 @@ function chainLabel(
   chain: string,
 ): string {
   return options.find((option) => option.chain === chain)?.label ?? chain
+}
+
+// 用测试网目录里的 explorerUrl 基址，按链家族拼出交易详情页链接（各家族路径不同）。
+// 思路同 apps/checkout 的 explorerTxUrl；但 playground 自包含、不依赖私有包 @stableops/shared，
+// 因此直接复用 testnets.ts 里已声明的 explorerUrl。未知链优雅降级（返回 null，不渲染链接）。
+function explorerTxUrl(chain: string, txHash: string): string | null {
+  const testnet = PlaygroundTestnets.find((option) => option.chain === chain)
+  const base = testnet?.explorerUrl
+  if (!base) return null
+  if (testnet.family === 'solana') {
+    // explorer.solana.com 用 /tx/，cluster 以 query 传入。
+    return `https://explorer.solana.com/tx/${txHash}?cluster=devnet`
+  }
+  if (testnet.family === 'tron') {
+    // tronscan 是单页应用，交易详情在 /#/transaction/。
+    return `${base}/#/transaction/${txHash}`
+  }
+  // EVM 系区块浏览器统一 /tx/。
+  return `${base}/tx/${txHash}`
 }
 
 function StatusBadge({ status }: { status: Step['status'] }) {
