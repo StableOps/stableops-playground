@@ -84,6 +84,30 @@ export const PlaygroundTestnets: readonly PlaygroundTestnet[] = [
     finalizeTimeoutMs: 150_000,
   },
   {
+    // ~3s 出块；confirmedAfter 15 / finalizedAfter 60 —— 与 BSC 主网保持一致。
+    chain: 'bsc-testnet',
+    asset: 'USDC',
+    family: 'evm',
+    label: 'BNB Chain Testnet · USDC (testnet)',
+    faucetUrl: 'https://www.bnbchain.org/en/testnet-faucet',
+    explorerUrl: 'https://testnet.bscscan.com',
+    detectTimeoutMs: 90_000,
+    confirmTimeoutMs: 120_000,
+    finalizeTimeoutMs: 300_000,
+  },
+  {
+    // ~3s 出块；confirmedAfter 15 / finalizedAfter 60 —— 与 BSC 主网保持一致。
+    chain: 'bsc-testnet',
+    asset: 'USDT',
+    family: 'evm',
+    label: 'BNB Chain Testnet · USDT (testnet)',
+    faucetUrl: 'https://www.bnbchain.org/en/testnet-faucet',
+    explorerUrl: 'https://testnet.bscscan.com',
+    detectTimeoutMs: 90_000,
+    confirmTimeoutMs: 120_000,
+    finalizeTimeoutMs: 300_000,
+  },
+  {
     // 亚秒 slot；confirmedAfter 1 / finalizedAfter 32，整体很快。
     chain: 'solana-devnet',
     asset: 'USDC',
