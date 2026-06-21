@@ -72,6 +72,18 @@ export const PlaygroundTestnets: readonly PlaygroundTestnet[] = [
     finalizeTimeoutMs: 300_000,
   },
   {
+    // ~2s 出块；confirmedAfter 2 / finalizedAfter 12，与 Base Sepolia 几乎一致。
+    chain: 'optimism-sepolia',
+    asset: 'USDC',
+    family: 'evm',
+    label: 'Optimism Sepolia · USDC (testnet)',
+    faucetUrl: 'https://faucet.circle.com',
+    explorerUrl: 'https://sepolia-optimism.etherscan.io',
+    detectTimeoutMs: 60_000,
+    confirmTimeoutMs: 90_000,
+    finalizeTimeoutMs: 150_000,
+  },
+  {
     // 亚秒 slot；confirmedAfter 1 / finalizedAfter 32，整体很快。
     chain: 'solana-devnet',
     asset: 'USDC',
