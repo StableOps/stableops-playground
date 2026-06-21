@@ -180,6 +180,7 @@ function CheckIcon({ className }: { className?: string }) {
 export type MultiSelectOption = {
   value: string
   label: string
+  key?: string
 }
 
 // 自包含的多选下拉：复刻 Preline data-hs-select 的视觉（toggle 按钮 + 浮层面板 + 选中打勾），
@@ -269,7 +270,7 @@ export function MultiSelect({
           {options.map((opt) => {
             const active = value.includes(opt.value)
             return (
-              <li key={opt.value} role="option" aria-selected={active}>
+              <li key={opt.key ?? opt.value} role="option" aria-selected={active}>
                 <button
                   type="button"
                   onClick={() => toggle(opt.value)}

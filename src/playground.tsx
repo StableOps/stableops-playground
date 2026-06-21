@@ -546,6 +546,7 @@ export function Playground({
               options={chainOptions.map((option) => ({
                 value: option.chain,
                 label: option.label,
+                key: `${option.chain}:${option.asset}`,
               }))}
               value={chains}
               onChange={(next) => setChains(next as DemoChain[])}
