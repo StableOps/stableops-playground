@@ -89,17 +89,28 @@ const messages = {
       placeholder: 'Paste your sandbox API key (sk_sandbox_…)',
       hint: 'Use a sandbox key. It stays in your browser and is sent directly to the API.',
     },
+    amountMode: {
+      label: 'Amount mode',
+      exact: 'EXACT',
+      auto: 'AUTO',
+      hint: 'Exact = use the exact amount you enter; Auto = system adjusts amount within a tiny range to avoid address conflicts on shared addresses.',
+    },
     autoImport: {
       label: 'Auto-import sandbox receiving address',
       hint: 'When on, a deterministic burner sandbox address is imported for this order before creating it — useful when your org has no addresses yet. Turn it off if you want to use only the addresses you manage yourself.',
     },
     noAddress: {
-      // 关掉 auto-import 时给的固定提示（出现在开关下方）。
-      banner:
-        'Auto-import is off. Make sure your sandbox org has at least one receiving address — manage them in',
-      dashboardLink: 'Dashboard → Addresses',
       // 建单失败 + auto-import 关 时追加到日志里的兜底提示。
       hint: 'tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.',
+    },
+    sep: ', ',
+    chains: {
+      label: 'Chains (multi-select)',
+      placeholder: 'Select chains…',
+    },
+    faucet: {
+      prefix:
+        'Real wallet transaction on the selected testnet(s) — do not use mainnet funds. Get test funds: ',
     },
     dropped: {
       nonEvmOnly:
@@ -170,14 +181,25 @@ const messages = {
       placeholder: '粘贴你的 sandbox API key（sk_sandbox_…）',
       hint: '请使用 sandbox key；它只保存在你的浏览器并直接发送给 API。',
     },
+    amountMode: {
+      label: '金额模式',
+      exact: 'EXACT',
+      auto: 'AUTO',
+    },
     autoImport: {
       label: '自动导入 sandbox 收款地址',
       hint: '开启时会在建单前为本订单导入一个确定性 burner 地址，适合 org 还没有任何收款地址的场景。如果你只想使用自己管理的地址，请关闭。',
     },
     noAddress: {
-      banner: '已关闭自动导入。请确保你的 sandbox org 至少有一个收款地址——可在',
-      dashboardLink: 'Dashboard → 收款地址',
       hint: '提示：如果建单失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
+    },
+    sep: '、',
+    chains: {
+      label: '链（可多选）',
+      placeholder: '选择一条或多条链…',
+    },
+    faucet: {
+      prefix: '真实钱包交易，使用所选测试网；不要用主网资金。领测试币：',
     },
     dropped: {
       nonEvmOnly: 'TRON 和 Solana 只有付费套餐才可用，请选择 EVM 链。',
@@ -261,6 +283,7 @@ export function Playground({
   const [chains, setChains] = useState<DemoChain[]>(['base-sepolia:USDC'])
   // 自动导入 sandbox 收款地址：默认开启；关闭时改用 org 已有地址，并在 UI / 失败日志里提示如何补救。
   const [autoImportAddress, setAutoImportAddress] = useState(true)
+  const [amountMode, setAmountMode] = useState<'exact' | 'auto'>('auto')
   const [order, setOrder] = useState<PaymentOrder | null>(null)
   const [steps, setSteps] = useState<Step[]>(initialSteps)
   const [log, setLog] = useState<string[]>([])
@@ -424,6 +447,7 @@ export function Playground({
             chain: o.chain,
             asset: o.asset,
           })),
+          amountMode,
           // 30 分钟后未支付自动过期，order-expiration worker 推进到 expired 并释放地址。
           expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         },
@@ -445,9 +469,8 @@ export function Playground({
           updateStep(0, { status: 'error', detail: msg.dropped.nonEvmOnly })
           append(msg.dropped.nonEvmOnly)
         } else if (nonEvm.length > 0 && hasEvmAllocated) {
-          const sep = locale === 'zh' ? '、' : ', '
           const detail = tpl(msg.dropped.nonEvmMix, {
-            chains: nonEvm.map((o) => o.label).join(sep),
+            chains: nonEvm.map((o) => o.label).join(msg.sep),
           })
           updateStep(0, { status: 'error', detail })
           append(detail)
@@ -479,9 +502,8 @@ export function Playground({
           append(msg.dropped.nonEvmOnly)
           updateStep(0, { status: 'error', detail: msg.dropped.nonEvmOnly })
         } else if (nonEvm.length > 0 && hasEvm) {
-          const sep = locale === 'zh' ? '、' : ', '
           const detail = tpl(msg.dropped.nonEvmMix, {
-            chains: nonEvm.map((o) => o.label).join(sep),
+            chains: nonEvm.map((o) => o.label).join(msg.sep),
           })
           append(detail)
           updateStep(0, { status: 'error', detail })
@@ -503,6 +525,7 @@ export function Playground({
     baseUrl,
     autoImportAddress,
     amount,
+    amountMode,
     selectedOptions,
     primaryOption,
     updateStep,
@@ -596,7 +619,7 @@ export function Playground({
           <p className="text-xs text-muted-foreground">{msg.apiKey.hint}</p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-[minmax(8rem,10rem)_minmax(0,1fr)] sm:items-start">
+        <div className="grid gap-4 sm:grid-cols-4 sm:items-start">
           <div className="space-y-2">
             <Label htmlFor="playground-amount" className="text-sm font-medium">
               Amount ({assetLabel})
@@ -609,9 +632,9 @@ export function Playground({
               disabled={Boolean(order)}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 col-span-2">
             <Label htmlFor="playground-chain" className="text-sm font-medium">
-              {locale === 'zh' ? '链（可多选）' : 'Chains (multi-select)'}
+              {msg.chains.label}
             </Label>
             <MultiSelect
               id="playground-chain"
@@ -621,9 +644,24 @@ export function Playground({
               }))}
               value={chains}
               onChange={(next) => setChains(next as DemoChain[])}
-              placeholder={
-                locale === 'zh' ? '选择一条或多条链…' : 'Select chains…'
+              placeholder={msg.chains.placeholder}
+              disabled={Boolean(order)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              {msg.amountMode.label}
+            </Label>
+            <MultiSelect
+              options={[
+                { value: 'exact', label: msg.amountMode.exact },
+                { value: 'auto', label: msg.amountMode.auto },
+              ]}
+              value={[amountMode]}
+              onChange={(next) =>
+                setAmountMode(next[next.length - 1] as 'exact' | 'auto')
               }
+              placeholder={msg.amountMode.label}
               disabled={Boolean(order)}
             />
           </div>
@@ -642,25 +680,9 @@ export function Playground({
           <p className="pl-6 text-xs text-muted-foreground">
             {msg.autoImport.hint}
           </p>
-          {!autoImportAddress ? (
-            <p className="pl-6 text-xs text-muted-foreground">
-              {msg.noAddress.banner}{' '}
-              <a
-                href={dashboardAddressesUrl(baseUrl, locale)}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2"
-              >
-                {msg.noAddress.dashboardLink}
-              </a>
-              .
-            </p>
-          ) : null}
         </div>
         <p className="text-xs text-muted-foreground">
-          {locale === 'zh'
-            ? '真实钱包交易，使用所选测试网；不要用主网资金。领测试币：'
-            : 'Real wallet transaction on the selected testnet(s) — do not use mainnet funds. Get test funds: '}
+          {msg.faucet.prefix}
           {selectedOptions.map((option, i) => (
             <span key={`${option.chain}:${option.asset}`}>
               {i > 0 ? ' · ' : ''}
