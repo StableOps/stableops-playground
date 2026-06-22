@@ -3,11 +3,7 @@
 import { StableOps, StableOpsError } from '@stableops/api-sdk'
 import type { PaymentOrder, PaymentOrderInstruction } from '@stableops/api-sdk'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
-import {
-  isAcceptedOrderStatus,
-  isFailedTerminalOrderStatus,
-  type WaitTarget,
-} from './order-status'
+import { isAcceptedOrderStatus, isFailedTerminalOrderStatus, type WaitTarget } from './order-status'
 import {
   getInjectedWalletProviders,
   selectWalletPaymentInstruction,
@@ -113,12 +109,9 @@ const messages = {
         'Real wallet transaction on the selected testnet(s) — do not use mainnet funds. Get test funds: ',
     },
     dropped: {
-      nonEvmOnly:
-        'TRON and Solana are only available on paid plans. Please select EVM chains.',
-      nonEvmMix:
-        'The following chains are only available on paid plans. Please deselect: {chains}',
-      fallback:
-        'Enable Auto-import or configure receiving addresses in the Dashboard.',
+      nonEvmOnly: 'TRON and Solana are only available on paid plans. Please select EVM chains.',
+      nonEvmMix: 'The following chains are only available on paid plans. Please deselect: {chains}',
+      fallback: 'Enable Auto-import or configure receiving addresses in the Dashboard.',
     },
     status: {
       missingKey: 'enter an API key first',
@@ -142,8 +135,7 @@ const messages = {
       providerNotFound: 'wallet provider not found for {chain}',
       waitTimedOut: 'wait {target} timed out; try again later',
       waitTerminalStatus: 'wait {target} stopped: order status is {status}',
-      manualConfirmed:
-        'manual transfer confirmed; polling for on-chain detection',
+      manualConfirmed: 'manual transfer confirmed; polling for on-chain detection',
     },
     footer:
       'This playground calls <code>@stableops/api-sdk</code> directly from your browser with the API key you provide. Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I\'ve sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.',
@@ -294,9 +286,7 @@ export function Playground({
     const picked = chains
       .map((composite) => {
         const [chain, asset] = composite.split(':')
-        return chainOptions.find(
-          (option) => option.chain === chain && option.asset === asset,
-        )
+        return chainOptions.find((option) => option.chain === chain && option.asset === asset)
       })
       .filter((option): option is PlaygroundTestnet => Boolean(option))
     return picked.length > 0 ? picked : [chainOptions[0]]
@@ -310,10 +300,7 @@ export function Playground({
   )
 
   const append = useCallback((line: string) => {
-    setLog((prev) => [
-      ...prev,
-      `${new Date().toISOString().slice(11, 19)}  ${line}`,
-    ])
+    setLog((prev) => [...prev, `${new Date().toISOString().slice(11, 19)}  ${line}`])
   }, [])
 
   // playground 默认开启 wallet-sdk 调试日志：挂载即打开，钱包支付全过程在控制台输出 [wallet-sdk] …，
@@ -323,9 +310,7 @@ export function Playground({
   }, [])
 
   const updateStep = useCallback((index: number, patch: Partial<Step>) => {
-    setSteps((prev) =>
-      prev.map((step, i) => (i === index ? { ...step, ...patch } : step)),
-    )
+    setSteps((prev) => prev.map((step, i) => (i === index ? { ...step, ...patch } : step)))
   }, [])
 
   const reset = useCallback(() => {
@@ -454,12 +439,8 @@ export function Playground({
         { idempotencyKey: merchantOrderId },
       )
       // 先检测被静默丢弃的链（无可用收款地址），失败则不 setOrder 阻断后续。
-      const allocatedChains = new Set(
-        created.paymentInstructions.map((pi) => pi.chain),
-      )
-      const dropped = selectedOptions.filter(
-        (opt) => !allocatedChains.has(opt.chain),
-      )
+      const allocatedChains = new Set(created.paymentInstructions.map((pi) => pi.chain))
+      const dropped = selectedOptions.filter((opt) => !allocatedChains.has(opt.chain))
       if (dropped.length > 0) {
         const nonEvm = dropped.filter((opt) => opt.family !== 'evm')
         const hasEvmAllocated = selectedOptions.some(
@@ -489,9 +470,7 @@ export function Playground({
           instructionCount > 1 ? ` (+${instructionCount - 1})` : ''
         }`,
       })
-      append(
-        tpl(msg.log.orderCreated, { id: created.id, status: created.status }),
-      )
+      append(tpl(msg.log.orderCreated, { id: created.id, status: created.status }))
     } catch (err) {
       const message = errMessage(err)
       // API 建单失败可能是免费套餐无可用地址，映射为友好提示。
@@ -548,9 +527,7 @@ export function Playground({
       })
       append(
         tpl(msg.log.providerNotFound, {
-          chain: order.paymentInstructions
-            .map((instruction) => instruction.chain)
-            .join(', '),
+          chain: order.paymentInstructions.map((instruction) => instruction.chain).join(', '),
         }),
       )
       return
@@ -649,18 +626,14 @@ export function Playground({
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              {msg.amountMode.label}
-            </Label>
+            <Label className="text-sm font-medium">{msg.amountMode.label}</Label>
             <MultiSelect
               options={[
                 { value: 'exact', label: msg.amountMode.exact },
                 { value: 'auto', label: msg.amountMode.auto },
               ]}
               value={[amountMode]}
-              onChange={(next) =>
-                setAmountMode(next[next.length - 1] as 'exact' | 'auto')
-              }
+              onChange={(next) => setAmountMode(next[next.length - 1] as 'exact' | 'auto')}
               placeholder={msg.amountMode.label}
               disabled={Boolean(order)}
             />
@@ -677,9 +650,7 @@ export function Playground({
             />
             <span className="font-medium">{msg.autoImport.label}</span>
           </label>
-          <p className="pl-6 text-xs text-muted-foreground">
-            {msg.autoImport.hint}
-          </p>
+          <p className="pl-6 text-xs text-muted-foreground">{msg.autoImport.hint}</p>
         </div>
         <p className="text-xs text-muted-foreground">
           {msg.faucet.prefix}
@@ -690,8 +661,7 @@ export function Playground({
                 href={option.faucetUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="underline underline-offset-2"
-              >
+                className="underline underline-offset-2">
                 {option.label}
               </a>
             </span>
@@ -701,29 +671,21 @@ export function Playground({
           <Button
             size="sm"
             onClick={createOrder}
-            disabled={
-              Boolean(order) ||
-              busy !== null ||
-              !trimmedKey ||
-              chains.length === 0
-            }
-          >
+            disabled={Boolean(order) || busy !== null || !trimmedKey || chains.length === 0}>
             {busy === 'create' ? msg.actions.creating : msg.actions.createOrder}
           </Button>
           <Button
             size="sm"
             variant="secondary"
             onClick={payWithWallet}
-            disabled={!order || busy !== null || steps[1].status === 'done'}
-          >
+            disabled={!order || busy !== null || steps[1].status === 'done'}>
             {busy === 'pay' ? msg.actions.paying : msg.actions.pay}
           </Button>
           <Button
             size="sm"
             variant="secondary"
             onClick={markManualTransfer}
-            disabled={!order || busy !== null || steps[1].status === 'done'}
-          >
+            disabled={!order || busy !== null || steps[1].status === 'done'}>
             {msg.actions.confirmManual}
           </Button>
           <Button
@@ -731,52 +693,29 @@ export function Playground({
             variant="secondary"
             onClick={() => waitForOrderStatus('detected', 2)}
             disabled={
-              !order ||
-              busy !== null ||
-              steps[1].status !== 'done' ||
-              steps[2].status === 'done'
-            }
-          >
-            {busy === 'detected'
-              ? msg.actions.polling
-              : msg.actions.waitDetected}
+              !order || busy !== null || steps[1].status !== 'done' || steps[2].status === 'done'
+            }>
+            {busy === 'detected' ? msg.actions.polling : msg.actions.waitDetected}
           </Button>
           <Button
             size="sm"
             variant="secondary"
             onClick={() => waitForOrderStatus('confirmed', 3)}
             disabled={
-              !order ||
-              busy !== null ||
-              steps[2].status !== 'done' ||
-              steps[3].status === 'done'
-            }
-          >
-            {busy === 'confirmed'
-              ? msg.actions.polling
-              : msg.actions.waitConfirmed}
+              !order || busy !== null || steps[2].status !== 'done' || steps[3].status === 'done'
+            }>
+            {busy === 'confirmed' ? msg.actions.polling : msg.actions.waitConfirmed}
           </Button>
           <Button
             size="sm"
             variant="secondary"
             onClick={() => waitForOrderStatus('finalized', 4)}
             disabled={
-              !order ||
-              busy !== null ||
-              steps[3].status !== 'done' ||
-              steps[4].status === 'done'
-            }
-          >
-            {busy === 'finalized'
-              ? msg.actions.polling
-              : msg.actions.waitFinalized}
+              !order || busy !== null || steps[3].status !== 'done' || steps[4].status === 'done'
+            }>
+            {busy === 'finalized' ? msg.actions.polling : msg.actions.waitFinalized}
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={reset}
-            disabled={busy !== null}
-          >
+          <Button size="sm" variant="ghost" onClick={reset} disabled={busy !== null}>
             {msg.actions.reset}
           </Button>
         </div>
@@ -786,10 +725,7 @@ export function Playground({
         <div className="space-y-3 rounded-lg border bg-background/50 p-4">
           <div className="text-sm font-medium">{msg.manual.heading}</div>
           {order.paymentInstructions.map((instruction) => (
-            <div
-              key={`${instruction.chain}:${instruction.address}`}
-              className="space-y-1.5"
-            >
+            <div key={`${instruction.chain}:${instruction.address}`} className="space-y-1.5">
               <div className="text-xs text-muted-foreground">
                 {tpl(msg.manual.sendTo, {
                   amount: order.amount,
@@ -817,8 +753,7 @@ export function Playground({
         {steps.map((step) => (
           <li
             key={step.label}
-            className="flex items-start gap-3 rounded-lg border bg-background/50 p-3.5 text-sm"
-          >
+            className="flex items-start gap-3 rounded-lg border bg-background/50 p-3.5 text-sm">
             <StatusBadge status={step.status} />
             <div className="min-w-0 flex-1">
               <div className="font-medium">{step.label}</div>
@@ -830,8 +765,7 @@ export function Playground({
                       href={step.link.href}
                       target="_blank"
                       rel="noreferrer"
-                      className="ml-2 inline-block text-xs underline underline-offset-2"
-                    >
+                      className="ml-2 inline-block text-xs underline underline-offset-2">
                       {step.link.label}
                     </a>
                   ) : null}
@@ -852,9 +786,7 @@ export function Playground({
       ) : null}
 
       <div className="rounded-lg border bg-background/50 p-3.5">
-        <div className="mb-1 text-xs font-medium text-muted-foreground">
-          Activity log
-        </div>
+        <div className="mb-1 text-xs font-medium text-muted-foreground">Activity log</div>
         <pre className="max-h-40 overflow-y-auto font-mono text-xs leading-relaxed">
           {log.length === 0 ? '(empty)' : log.join('\n')}
         </pre>
@@ -896,10 +828,7 @@ function CopyButton({
 }
 
 // 用测试网目录把链 id 渲染成可读标签，找不到则回落到链 id 本身。
-function chainLabel(
-  options: readonly PlaygroundTestnet[],
-  chain: string,
-): string {
+function chainLabel(options: readonly PlaygroundTestnet[], chain: string): string {
   return options.find((option) => option.chain === chain)?.label ?? chain
 }
 
@@ -929,9 +858,7 @@ function StatusBadge({ status }: { status: Step['status'] }) {
   return <Badge variant="outline">idle</Badge>
 }
 
-function toWalletInstruction(
-  instruction: PaymentOrderInstruction,
-): WalletPaymentInstruction {
+function toWalletInstruction(instruction: PaymentOrderInstruction): WalletPaymentInstruction {
   return {
     chain: instruction.chain as WalletPaymentInstruction['chain'],
     asset: instruction.asset as WalletPaymentInstruction['asset'],

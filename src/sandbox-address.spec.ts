@@ -9,7 +9,9 @@ describe('demoSandboxAddress', () => {
   })
 
   it('同种子确定性（import 幂等）', () => {
-    expect(demoSandboxAddress('base-sepolia:demo_1')).toBe(demoSandboxAddress('base-sepolia:demo_1'))
+    expect(demoSandboxAddress('base-sepolia:demo_1')).toBe(
+      demoSandboxAddress('base-sepolia:demo_1'),
+    )
   })
 
   it('不同订单生成不同地址（每单独立地址，避免共享错配）', () => {
