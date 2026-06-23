@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Badge, Button, cn, Input, Label, MultiSelect } from './ui'
 import { importSandboxAddress } from './sandbox-address'
+import { createConfirmationProgressGuard } from './wallet-confirmation-guard'
 
 // 独立、可嵌入的 StableOps playground：在浏览器里走一遍「建单 → 钱包链上支付 → 确认 → 终局」。
 // 直接用 @stableops/api-sdk + 调用方提供的 API Key 调真实 API（建单 / 查单 / 地址导入），
@@ -123,6 +124,7 @@ const messages = {
       txHash: 'tx {hash}',
       viewTx: 'View on block explorer ↗',
       terminalStatus: 'order reached {status} before {target}',
+      walletReverted: 'transaction reverted on chain; no tokens were moved',
     },
     log: {
       missingKey: 'create failed: API key is required',
@@ -132,6 +134,7 @@ const messages = {
       orderStatus: 'order status: {status}',
       walletSent: 'wallet payment sent: {hash}',
       walletFailed: 'wallet payment failed: {message}',
+      walletReverted: 'transaction reverted: {hash}',
       providerNotFound: 'wallet provider not found for {chain}',
       waitTimedOut: 'wait {target} timed out; try again later',
       waitTerminalStatus: 'wait {target} stopped: order status is {status}',
@@ -208,6 +211,7 @@ const messages = {
       txHash: 'tx {hash}',
       viewTx: '在区块浏览器查看 ↗',
       terminalStatus: '订单在到达 {target} 前已进入 {status}',
+      walletReverted: '链上交易回滚，没有代币转出',
     },
     log: {
       missingKey: 'create failed: 需要先填写 API key',
@@ -217,6 +221,7 @@ const messages = {
       orderStatus: 'order status: {status}',
       walletSent: 'wallet payment sent: {hash}',
       walletFailed: 'wallet payment failed: {message}',
+      walletReverted: '链上交易回滚：{hash}',
       providerNotFound: 'wallet provider not found for {chain}',
       waitTimedOut: 'wait {target} timed out; try again later',
       waitTerminalStatus: 'wait {target} stopped: order status is {status}',
@@ -545,6 +550,16 @@ export function Playground({
             ? 'https://api.devnet.solana.com'
             : undefined,
       })
+
+      // 在后台监听链上确认结果：revert 时更新 UI，但若 scanner 已推进则以链上为准。
+      const guard = createConfirmationProgressGuard()
+      sent.confirmation.catch((err) => {
+        if (guard.shouldIgnoreError()) return
+        const message = formatWalletError(err)
+        updateStep(1, { status: 'error', detail: message })
+        append(tpl(msg.log.walletReverted, { hash: sent.txHash }))
+      })
+
       // 用所支付链的区块浏览器拼出交易详情页链接，方便用户点开核对这笔链上转账。
       const txUrl = explorerTxUrl(selected.instruction.chain, sent.txHash)
       updateStep(1, {
@@ -553,9 +568,12 @@ export function Playground({
         link: txUrl ? { href: txUrl, label: msg.status.viewTx } : undefined,
       })
       append(tpl(msg.log.walletSent, { hash: sent.txHash }))
-      await refreshOrder(order.id)
+      const fresh = await refreshOrder(order.id)
+      // 如果服务端已推进（refreshOrder 返回非 created），立即标记避免异步 confirmation reject 冲突。
+      if (fresh && fresh.status !== 'created') guard.markProgressed()
       // 支付成功后自动接力到 confirmed / finalized，无需再手动点按钮。
       await continueToFinal()
+      guard.markProgressed()
     } catch (err) {
       const message = formatWalletError(err)
       updateStep(1, { status: 'error', detail: message })
