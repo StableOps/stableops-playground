@@ -888,21 +888,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-// 从 API baseUrl 推出 dashboard/addresses 链接：剥去 api. 前缀，本地保留 host 换成 :3000。
-// 兜底回生产 stableops.dev（baseUrl 无法解析时）。
-function dashboardAddressesUrl(baseUrl: string, locale: Locale): string {
-  try {
-    const url = new URL(baseUrl)
-    if (url.hostname === 'localhost' || url.hostname.startsWith('127.')) {
-      return `${url.protocol}//localhost:3000/${locale}/dashboard/addresses`
-    }
-    const host = url.host.startsWith('api.') ? url.host.slice(4) : url.host
-    return `${url.protocol}//${host}/${locale}/dashboard/addresses`
-  } catch {
-    return `https://stableops.dev/${locale}/dashboard/addresses`
-  }
-}
-
 // API 错误统一抽成一行：StableOpsError 带后端 message；其余回落到 Error.message / String。
 function errMessage(err: unknown): string {
   if (err instanceof StableOpsError) return err.message
