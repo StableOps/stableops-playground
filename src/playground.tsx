@@ -5,13 +5,17 @@ import type { PaymentOrder, PaymentOrderInstruction } from '@stableops/api-sdk'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 import { isAcceptedOrderStatus, isFailedTerminalOrderStatus, type WaitTarget } from './order-status'
 import {
+  createWalletConnectConnection,
   getInjectedWalletProviders,
   selectWalletPaymentInstruction,
   sendWalletPayment,
   setWalletSdkDebug,
+  type WalletConnectConnection,
+  type WalletConnectMetadata,
   type WalletPaymentInstruction,
+  type WalletProviderByChain,
 } from '@stableops/wallet-sdk'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Badge, Button, cn, Input, Label, MultiSelect } from './ui'
 import { importSandboxAddress } from './sandbox-address'
@@ -31,6 +35,13 @@ export type PlaygroundProps = {
   baseUrl?: string
   locale?: 'en' | 'zh'
   className?: string
+  // 启用 WalletConnect 移动端兜底：手机浏览器(非钱包内置浏览器)无 window.ethereum 时,
+  // 用 WC 模态框拉起已安装的钱包 App 完成签名。不传则只走注入式 provider 路径。
+  // 嵌入方需到 https://cloud.reown.com 免费申请 projectId,SDK 不内置任何 key。
+  walletConnectProjectId?: string
+  // 可选:覆盖 WC 模态框里显示的 dApp 名称 / 描述 / 图标。
+  // 默认基于 location.origin / document.title 自动构造,通常无需传。
+  walletConnectMetadata?: WalletConnectMetadata
 }
 
 // 是否自动导入 sandbox 地址改为内部开关（UI 控制），不再作为对外 prop——
@@ -120,6 +131,7 @@ const messages = {
       orderStatus: 'order={status}',
       timeout: 'timeout waiting for {target}; scanner may still be catching up',
       walletProviderNotFound: 'wallet provider not found',
+      walletConnectConnecting: 'connecting via WalletConnect…',
       waitingWallet: 'waiting for wallet confirmation…',
       txHash: 'tx {hash}',
       viewTx: 'View on block explorer ↗',
@@ -136,6 +148,9 @@ const messages = {
       walletFailed: 'wallet payment failed: {message}',
       walletReverted: 'transaction reverted: {hash}',
       providerNotFound: 'wallet provider not found for {chain}',
+      walletConnectOpening: 'opening WalletConnect modal…',
+      walletConnectConnected: 'WalletConnect connected: {account}',
+      walletConnectUri: 'WalletConnect URI: {uri}',
       waitTimedOut: 'wait {target} timed out; try again later',
       waitTerminalStatus: 'wait {target} stopped: order status is {status}',
       manualConfirmed: 'manual transfer confirmed; polling for on-chain detection',
@@ -207,6 +222,7 @@ const messages = {
       orderStatus: 'order={status}',
       timeout: '等待 {target} 超时；scanner 可能仍在追赶中',
       walletProviderNotFound: '未找到钱包 provider',
+      walletConnectConnecting: '正在通过 WalletConnect 连接…',
       waitingWallet: '等待钱包确认…',
       txHash: 'tx {hash}',
       viewTx: '在区块浏览器查看 ↗',
@@ -223,6 +239,9 @@ const messages = {
       walletFailed: 'wallet payment failed: {message}',
       walletReverted: '链上交易回滚：{hash}',
       providerNotFound: 'wallet provider not found for {chain}',
+      walletConnectOpening: '打开 WalletConnect 选钱包…',
+      walletConnectConnected: 'WalletConnect 已连接：{account}',
+      walletConnectUri: 'WalletConnect URI：{uri}',
       waitTimedOut: 'wait {target} timed out; try again later',
       waitTerminalStatus: 'wait {target} stopped: order status is {status}',
       manualConfirmed: '已确认手动转账；开始等待链上检测',
@@ -241,6 +260,8 @@ export function Playground({
   baseUrl = DEFAULT_BASE_URL,
   locale: localeProp = 'en',
   className,
+  walletConnectProjectId,
+  walletConnectMetadata,
 }: PlaygroundProps) {
   const locale: Locale = localeProp === 'zh' ? 'zh' : 'en'
   const msg = messages[locale]
@@ -318,12 +339,29 @@ export function Playground({
     setSteps((prev) => prev.map((step, i) => (i === index ? { ...step, ...patch } : step)))
   }, [])
 
+  // WC 兜底:仅当未注入 EVM provider(典型为手机普通浏览器)且接入方提供了 projectId 时按需创建。
+  // 用 ref 而非 state:连接在异步函数闭包里使用,不需要触发重渲染。
+  const walletConnectRef = useRef<WalletConnectConnection | null>(null)
+
   const reset = useCallback(() => {
     setOrder(null)
     setSteps(initialSteps)
     setLog([])
     setBusy(null)
+    // reset 时主动断开 WC 会话,避免下次连接残留旧 session;失败不阻塞 UI。
+    const wc = walletConnectRef.current
+    walletConnectRef.current = null
+    if (wc) void wc.disconnect().catch(() => {})
   }, [initialSteps])
+
+  // 卸载时同样断开,防止用户离开页面后 WC relay 长连接继续保持。
+  useEffect(() => {
+    return () => {
+      const wc = walletConnectRef.current
+      walletConnectRef.current = null
+      if (wc) void wc.disconnect().catch(() => {})
+    }
+  }, [])
 
   const refreshOrder = useCallback(
     async (id: string) => {
@@ -519,12 +557,48 @@ export function Playground({
 
   const payWithWallet = useCallback(async () => {
     if (!order) return
+
+    const walletInstructions = order.paymentInstructions.map(toWalletInstruction)
+    let providers: WalletProviderByChain = getInjectedWalletProviders()
+
+    // 桌面浏览器插件 / 钱包内置浏览器 → providers 里已有 EVM provider,跳过 WC。
+    // 普通手机浏览器没注入 provider:订单含 EVM 链且接入方提供了 projectId 时,
+    // 通过 WalletConnect 模态框拉起已安装钱包 App 完成签名(没装钱包则降级二维码)。
+    const orderHasEvm = walletInstructions.some((i) => isEvmChainId(i.chain))
+    const hasInjectedEvm = walletInstructions.some(
+      (i) => isEvmChainId(i.chain) && providers[i.chain],
+    )
+
+    if (orderHasEvm && !hasInjectedEvm && walletConnectProjectId) {
+      setBusy('pay')
+      updateStep(1, { status: 'pending', detail: msg.status.walletConnectConnecting })
+      append(msg.log.walletConnectOpening)
+      try {
+        let wc = walletConnectRef.current
+        if (!wc) {
+          wc = await createWalletConnectConnection({
+            projectId: walletConnectProjectId,
+            metadata: walletConnectMetadata ?? defaultWalletConnectMetadata(),
+          })
+          walletConnectRef.current = wc
+          // display_uri 也写到日志面板,桌面调试时可手动复制到 WC 钱包测试。
+          wc.onDisplayUri((uri) => append(tpl(msg.log.walletConnectUri, { uri })))
+        }
+        const accounts = await wc.connect()
+        providers = { ...providers, ...wc.providers }
+        append(tpl(msg.log.walletConnectConnected, { account: accounts[0] ?? '?' }))
+      } catch (err) {
+        const message = formatWalletError(err)
+        updateStep(1, { status: 'error', detail: message })
+        append(tpl(msg.log.walletFailed, { message }))
+        setBusy(null)
+        return
+      }
+    }
+
     let selected: ReturnType<typeof selectWalletPaymentInstruction>
     try {
-      selected = selectWalletPaymentInstruction(
-        order.paymentInstructions.map(toWalletInstruction),
-        getInjectedWalletProviders(),
-      )
+      selected = selectWalletPaymentInstruction(walletInstructions, providers)
     } catch {
       updateStep(1, {
         status: 'error',
@@ -535,6 +609,7 @@ export function Playground({
           chain: order.paymentInstructions.map((instruction) => instruction.chain).join(', '),
         }),
       )
+      setBusy(null)
       return
     }
 
@@ -581,7 +656,16 @@ export function Playground({
     } finally {
       setBusy(null)
     }
-  }, [append, order, refreshOrder, updateStep, continueToFinal, msg])
+  }, [
+    append,
+    order,
+    refreshOrder,
+    updateStep,
+    continueToFinal,
+    msg,
+    walletConnectProjectId,
+    walletConnectMetadata,
+  ])
 
   // 手动转账路径：用户用任意钱包/交易所往收款地址转完账后点此确认。不发链上交易——
   // 只把第 2 步标记为 done 解锁后续轮询，真正的入金仍由 scanner 按地址唯一匹配检测。
@@ -886,6 +970,42 @@ function toWalletInstruction(instruction: PaymentOrderInstruction): WalletPaymen
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// EVM 链清单(与 wallet-sdk 内部 EVM_WALLET_CHAINS 一致;wallet-sdk 不导出该常量,在这里
+// 维护一份本地副本即可——加链时两边同步即可,实际加链频率很低且会被 typecheck 兜住。
+const PLAYGROUND_EVM_CHAINS = new Set<WalletPaymentInstruction['chain']>([
+  'ethereum',
+  'base',
+  'base-sepolia',
+  'arbitrum',
+  'polygon',
+  'optimism',
+  'bsc',
+  'bsc-testnet',
+  'ethereum-sepolia',
+  'arbitrum-sepolia',
+  'polygon-amoy',
+  'optimism-sepolia',
+])
+
+function isEvmChainId(chain: WalletPaymentInstruction['chain']): boolean {
+  return PLAYGROUND_EVM_CHAINS.has(chain)
+}
+
+// WC 模态框显示用的 dApp metadata 默认值:取自当前页 origin / title,确保 icons 有合法 URL
+// (空字符串会被 WC 拒绝)。接入方传 walletConnectMetadata 可整体覆盖。
+function defaultWalletConnectMetadata(): WalletConnectMetadata {
+  const origin =
+    typeof location !== 'undefined' && location.origin ? location.origin : 'https://stableops.dev'
+  const title =
+    typeof document !== 'undefined' && document.title ? document.title : 'StableOps Playground'
+  return {
+    name: title,
+    description: 'StableOps payment playground',
+    url: origin,
+    icons: [`${origin}/favicon.ico`],
+  }
 }
 
 // API 错误统一抽成一行：StableOpsError 带后端 message；其余回落到 Error.message / String。
