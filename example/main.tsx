@@ -8,6 +8,7 @@ import './styles.css'
 // 独立运行入口（dev harness）：默认指向本地 API（先跑 `pnpm --filter @stableops/api dev`），
 // 可用环境变量 VITE_STABLEOPS_API_URL 覆盖。打开页面后在组件里粘贴 sandbox API key 即可。
 const baseUrl = import.meta.env.VITE_STABLEOPS_API_URL ?? 'https://api.stableops.dev'
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 
 const rootEl = document.getElementById('root')
 if (!rootEl) throw new Error('#root element not found')
@@ -33,7 +34,11 @@ function App() {
           {locale === 'en' ? '中文' : 'English'}
         </button>
       </header>
-      <Playground baseUrl={baseUrl} locale={locale} />
+      <Playground
+        baseUrl={baseUrl}
+        locale={locale}
+        walletConnectProjectId={walletConnectProjectId}
+      />
     </main>
   )
 }

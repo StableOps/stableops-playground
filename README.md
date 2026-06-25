@@ -41,7 +41,7 @@ the StableOps API from the browser, so:
 ## Installation
 
 ```bash
-pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk react react-dom
+pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/ethereum-provider react react-dom
 ```
 
 ## Usage
@@ -55,6 +55,7 @@ export function Demo() {
       // Optional default key; users can also paste their own in the UI.
       apiKey={process.env.NEXT_PUBLIC_STABLEOPS_SANDBOX_KEY}
       baseUrl="https://api.stableops.dev"
+      walletConnectProjectId={process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
       locale="en"
     />
   )
@@ -66,12 +67,13 @@ client component (a file with `"use client"`).
 
 ## Props
 
-| Prop        | Type           | Default                     | Description                                                                               |
-| ----------- | -------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
-| `apiKey`    | `string`       | —                           | Default API key. The widget also exposes an input so users can paste/override their own.  |
-| `baseUrl`   | `string`       | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS. |
-| `locale`    | `'en' \| 'zh'` | `'en'`                      | UI language.                                                                              |
-| `className` | `string`       | —                           | Extra classes for the root container.                                                     |
+| Prop                     | Type           | Default                     | Description                                                                               |
+| ------------------------ | -------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
+| `apiKey`                 | `string`       | —                           | Default API key. The widget also exposes an input so users can paste/override their own.  |
+| `baseUrl`                | `string`       | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS. |
+| `walletConnectProjectId` | `string`       | —                           | Reown projectId used by the WalletConnect QR flow. The WalletConnect button is disabled without it. |
+| `locale`                 | `'en' \| 'zh'` | `'en'`                      | UI language.                                                                              |
+| `className`              | `string`       | —                           | Extra classes for the root container.                                                     |
 
 The widget also exposes an **Auto-import sandbox receiving address** checkbox in
 its UI (on by default). When on, it imports a deterministic burner sandbox
@@ -87,7 +89,9 @@ a hint pointing at the dashboard.
    deterministic burner sandbox address is imported first so the order can
    allocate one.
 2. **Pay on-chain**: `@stableops/wallet-sdk` selects a payable instruction and
-   asks the browser wallet to send the ERC-20 / SPL / TRC-20 transfer.
+   asks the browser wallet to send the ERC-20 / SPL / TRC-20 transfer. For EVM
+   instructions, the WalletConnect button opens a custom wallet picker and QR
+   panel driven by `createWalletConnectController()`.
 3. **Wait confirmed / finalized**: polls `GET /v1/payment-orders/:id` while the
    scanner and confirmations watcher advance the order.
 
@@ -105,7 +109,7 @@ pnpm dev
 
 It serves the page from `example/` (default http://localhost:5173). Point it at a
 different API with `VITE_STABLEOPS_API_URL` (defaults to `https://api.stableops.dev`),
-then paste a sandbox API key in the UI.
+set `VITE_WALLETCONNECT_PROJECT_ID` to enable WalletConnect, then paste a sandbox API key in the UI.
 
 ## License
 

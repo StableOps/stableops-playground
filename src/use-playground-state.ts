@@ -14,6 +14,7 @@ import {
   errMessage,
   explorerTxUrl,
   formatWalletError,
+  mergeWalletProviders,
   POLL_INTERVAL_MS,
   sleep,
   toWalletInstruction,
@@ -44,7 +45,7 @@ export type UsePlaygroundState = {
   log: string[]
   busy: string | null
   createOrder: () => Promise<void>
-  payWithWallet: () => Promise<void>
+  payWithWallet: (providers?: WalletProviderByChain) => Promise<void>
   markManualTransfer: () => Promise<void>
   waitForOrderStatus: (target: WaitTarget, index: number) => Promise<boolean>
   reset: () => void
@@ -324,11 +325,11 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     continueToFinal,
   ])
 
-  const payWithWallet = useCallback(async () => {
+  const payWithWallet = useCallback(async (extraProviders: WalletProviderByChain = {}) => {
     if (!order) return
 
     const walletInstructions = order.paymentInstructions.map(toWalletInstruction)
-    const providers: WalletProviderByChain = getInjectedWalletProviders()
+    const providers = mergeWalletProviders(getInjectedWalletProviders(), extraProviders)
 
     let selected: ReturnType<typeof selectWalletPaymentInstruction>
     try {

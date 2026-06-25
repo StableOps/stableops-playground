@@ -33,7 +33,7 @@
 ## 安装
 
 ```bash
-pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk react react-dom
+pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/ethereum-provider react react-dom
 ```
 
 ## 使用
@@ -47,6 +47,7 @@ export function Demo() {
       // 可选默认 key；用户也可在 UI 里粘贴自己的 key。
       apiKey={process.env.NEXT_PUBLIC_STABLEOPS_SANDBOX_KEY}
       baseUrl="https://api.stableops.dev"
+      walletConnectProjectId={process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
       locale="zh"
     />
   )
@@ -58,12 +59,13 @@ export function Demo() {
 
 ## Props
 
-| Prop        | 类型           | 默认值                      | 说明                                                            |
-| ----------- | -------------- | --------------------------- | --------------------------------------------------------------- |
-| `apiKey`    | `string`       | —                           | 默认 API key。组件同时提供输入框，用户可粘贴/覆盖自己的 key。   |
-| `baseUrl`   | `string`       | `https://api.stableops.dev` | StableOps API base URL，需浏览器可达且在 API 的 CORS 白名单内。 |
-| `locale`    | `'en' \| 'zh'` | `'en'`                      | 界面语言。                                                      |
-| `className` | `string`       | —                           | 根容器额外类名。                                                |
+| Prop                     | 类型           | 默认值                      | 说明                                                            |
+| ------------------------ | -------------- | --------------------------- | --------------------------------------------------------------- |
+| `apiKey`                 | `string`       | —                           | 默认 API key。组件同时提供输入框，用户可粘贴/覆盖自己的 key。   |
+| `baseUrl`                | `string`       | `https://api.stableops.dev` | StableOps API base URL，需浏览器可达且在 API 的 CORS 白名单内。 |
+| `walletConnectProjectId` | `string`       | —                           | WalletConnect 二维码流程使用的 Reown projectId；未传时 WalletConnect 按钮禁用。 |
+| `locale`                 | `'en' \| 'zh'` | `'en'`                      | 界面语言。                                                      |
+| `className`              | `string`       | —                           | 根容器额外类名。                                                |
 
 组件 UI 内还提供一个 **「自动导入 sandbox 收款地址」** 勾选框（默认开启）：开启时
 会在建单前导入一个确定性 burner sandbox 地址。适合 org 还没任何地址的场景。关闭后
@@ -76,7 +78,8 @@ export function Demo() {
    勾选「自动导入 sandbox 收款地址」（默认开启）时会先导入一个确定性 burner sandbox 地址，
    供订单分配。
 2. **链上支付**：`@stableops/wallet-sdk` 选出可支付指令并唤起浏览器钱包发送
-   ERC-20 / SPL / TRC-20 转账。
+   ERC-20 / SPL / TRC-20 转账。对于 EVM 指令，WalletConnect 按钮会打开由
+   `createWalletConnectController()` 驱动的自定义钱包选择和二维码面板。
 3. **等待 confirmed / finalized**：轮询 `GET /v1/payment-orders/:id`，由 scanner 与
    confirmations watcher 推进订单。
 
@@ -91,7 +94,8 @@ pnpm dev
 ```
 
 页面来自 `example/`（默认 http://localhost:5173）。用 `VITE_STABLEOPS_API_URL`
-指向不同 API（默认 `http://localhost:3001`），然后在界面里粘贴 sandbox API key。
+指向不同 API（默认 `https://api.stableops.dev`），设置 `VITE_WALLETCONNECT_PROJECT_ID`
+可启用 WalletConnect，然后在界面里粘贴 sandbox API key。
 
 ## 许可
 

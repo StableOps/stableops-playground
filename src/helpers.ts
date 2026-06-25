@@ -1,6 +1,6 @@
 import { StableOpsError } from '@stableops/api-sdk'
 import type { PaymentOrderInstruction } from '@stableops/api-sdk'
-import type { WalletPaymentInstruction } from '@stableops/wallet-sdk'
+import type { WalletPaymentInstruction, WalletProviderByChain } from '@stableops/wallet-sdk'
 
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 
@@ -43,6 +43,17 @@ export function toWalletInstruction(instruction: PaymentOrderInstruction): Walle
     asset: instruction.asset as WalletPaymentInstruction['asset'],
     address: instruction.address,
   }
+}
+
+export function mergeWalletProviders(
+  injected: WalletProviderByChain,
+  explicit: WalletProviderByChain = {},
+): WalletProviderByChain {
+  const merged: WalletProviderByChain = { ...injected }
+  for (const [chain, provider] of Object.entries(explicit)) {
+    if (provider) merged[chain as WalletPaymentInstruction['chain']] = provider
+  }
+  return merged
 }
 
 export function sleep(ms: number): Promise<void> {
