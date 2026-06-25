@@ -176,6 +176,11 @@ export function Playground({
     )
   }, [order])
   const walletConnectAvailable = walletConnectChains.length > 0
+  // 链集合签名，作为 controller 生命周期的稳定 key，避免 useEffect 依赖整数组每次 render 都变。
+  const walletConnectChainsKey = useMemo(
+    () => walletConnectChains.slice().sort().join(','),
+    [walletConnectChains],
+  )
 
   useEffect(() => {
     if (walletConnectState.status !== 'uri_ready') {
@@ -213,34 +218,71 @@ export function Playground({
     setWalletConnectError(null)
   }, [])
 
+  // Modal 打开后惰性创建 controller，并随关闭 / 链集合变化彻底 disconnect。
+  // 关键：原实现每次点钱包按钮都 new 一个 controller，导致同一 tab 内多份 EthereumProvider
+  // 实例共享 localStorage,旧实例的 proposal/session 还会被 relay 投递到新实例,
+  // 触发 "No matching key. proposal/topic" 噪音日志。
+  useEffect(() => {
+    if (!walletConnectOpen) return
+    if (!walletConnectProjectId || walletConnectChains.length === 0) return
+    let cancelled = false
+    let createdController: WalletConnectController | null = null
+    let unsubscribe: (() => void) | undefined
+    void (async () => {
+      try {
+        const controller = await createWalletConnectController({
+          projectId: walletConnectProjectId,
+          metadata: {
+            name: 'StableOps Playground',
+            description: 'StableOps sandbox payment playground',
+            url: window.location.origin,
+            icons: [`${window.location.origin}/logo.svg`],
+          },
+          chains: walletConnectChains,
+          wallets: WalletConnectWallets,
+        })
+        if (cancelled) {
+          await controller.disconnect().catch(() => undefined)
+          return
+        }
+        createdController = controller
+        unsubscribe = controller.subscribe(setWalletConnectState)
+        setWalletConnectState(controller.getState())
+        setWalletConnectController(controller)
+      } catch (err) {
+        if (!cancelled) {
+          setWalletConnectError(err instanceof Error ? err.message : String(err))
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+      unsubscribe?.()
+      if (createdController) {
+        void createdController.disconnect().catch(() => undefined)
+      }
+      setWalletConnectController(null)
+      setWalletConnectState({ status: 'idle', wallets: WalletConnectWallets })
+      setWalletConnectQrCode(null)
+    }
+    // walletConnectChains 用 key 做稳定依赖；按链集合签名重建即可。
+  }, [walletConnectOpen, walletConnectProjectId, walletConnectChains, walletConnectChainsKey])
+
   const connectWalletConnect = useCallback(
     async (wallet: WalletConnectWalletOption) => {
       if (!order || walletConnectChains.length === 0 || !walletConnectProjectId) return
+      const controller = walletConnectController
+      if (!controller) return
       setWalletConnectError(null)
-      const controller = await createWalletConnectController({
-        projectId: walletConnectProjectId,
-        metadata: {
-          name: 'StableOps Playground',
-          description: 'StableOps sandbox payment playground',
-          url: window.location.origin,
-          icons: [`${window.location.origin}/logo.svg`],
-        },
-        chains: walletConnectChains,
-        wallets: WalletConnectWallets,
-      })
-      setWalletConnectController(controller)
-      const unsubscribe = controller.subscribe(setWalletConnectState)
       try {
         await controller.connect({ walletId: wallet.id })
         await payWithWallet(controller.providers)
         setWalletConnectOpen(false)
       } catch (err) {
         setWalletConnectError(err instanceof Error ? err.message : String(err))
-      } finally {
-        unsubscribe()
       }
     },
-    [order, payWithWallet, walletConnectChains, walletConnectProjectId],
+    [order, payWithWallet, walletConnectChains, walletConnectProjectId, walletConnectController],
   )
 
   return (
@@ -403,83 +445,98 @@ export function Playground({
       </div>
 
       {walletConnectOpen ? (
-        <div className="rounded-lg border bg-background/50 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <div className="text-sm font-medium">{msg.walletConnect.heading}</div>
-              <p className="text-xs text-muted-foreground">
-                {!walletConnectProjectId
-                  ? msg.walletConnect.missingProjectId
-                  : walletConnectAvailable
-                    ? msg.walletConnect.hint
-                    : msg.walletConnect.noEvm}
-              </p>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+          onClick={() => {
+            setWalletConnectOpen(false)
+            void resetWalletConnect()
+          }}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="playground-walletconnect-title"
+            className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-lg border bg-background p-4 shadow-xl sm:p-5"
+            onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <div id="playground-walletconnect-title" className="text-sm font-semibold">
+                  {msg.walletConnect.heading}
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {!walletConnectProjectId
+                    ? msg.walletConnect.missingProjectId
+                    : walletConnectAvailable
+                      ? msg.walletConnect.hint
+                      : msg.walletConnect.noEvm}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="shrink-0"
+                onClick={() => {
+                  setWalletConnectOpen(false)
+                  void resetWalletConnect()
+                }}>
+                {msg.walletConnect.close}
+              </Button>
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setWalletConnectOpen(false)
-                void resetWalletConnect()
-              }}>
-              {msg.walletConnect.close}
-            </Button>
-          </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <div className="grid gap-2 sm:grid-cols-2">
-              {WalletConnectWallets.map((wallet) => (
-                <button
-                  key={wallet.id}
-                  type="button"
-                  className="flex min-h-16 items-center gap-3 rounded-md border bg-background px-3 py-2 text-left text-sm shadow-sm transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!walletConnectProjectId || !walletConnectAvailable}
-                  onClick={() => void connectWalletConnect(wallet)}>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-muted/40 text-xs font-semibold">
-                    {wallet.name.slice(0, 2)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{wallet.name}</span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {wallet.links?.universal ? msg.walletConnect.deepLink : msg.walletConnect.scanQr}
+            <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,300px)_minmax(260px,1fr)]">
+              <div className="space-y-2">
+                {WalletConnectWallets.map((wallet) => (
+                  <button
+                    key={wallet.id}
+                    type="button"
+                    className="flex min-h-14 w-full items-center gap-3 rounded-md border bg-muted/20 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!walletConnectProjectId || !walletConnectAvailable}
+                    onClick={() => void connectWalletConnect(wallet)}>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-background text-xs font-semibold">
+                      {wallet.name.slice(0, 2)}
                     </span>
-                  </span>
-                </button>
-              ))}
-            </div>
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{wallet.name}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {wallet.links?.universal
+                          ? msg.walletConnect.deepLink
+                          : msg.walletConnect.scanQr}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-            <div className="rounded-md border bg-background p-3">
-              <div className="mb-2 text-xs font-medium text-muted-foreground">
-                {msg.walletConnect.qrTitle}
-              </div>
-              <div className="flex aspect-square items-center justify-center rounded-md bg-white p-3">
-                {walletConnectQrCode ? (
-                  <img
-                    src={walletConnectQrCode}
-                    alt={msg.walletConnect.qrAlt}
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <div className="px-3 text-center text-xs text-muted-foreground">
-                    {walletConnectState.status === 'connecting'
-                      ? msg.walletConnect.waitingUri
-                      : msg.walletConnect.chooseWallet}
-                  </div>
-                )}
-              </div>
-              {walletConnectState.status === 'uri_ready' ? (
-                <div className="mt-3 space-y-2">
-                  <div className="break-all rounded-md border bg-muted/40 p-2 font-mono text-[11px] leading-relaxed">
-                    {walletConnectState.uri}
-                  </div>
-                  <CopyButton
-                    value={walletConnectState.uri}
-                    copyLabel={msg.walletConnect.copyUri}
-                    copiedLabel={msg.manual.copied}
-                  />
-                  {walletConnectState.selectedWallet?.links ? (
+              <div className="space-y-3">
+                <div className="text-xs font-medium text-muted-foreground">
+                  {msg.walletConnect.qrTitle}
+                </div>
+                <div className="mx-auto flex aspect-square w-full max-w-64 items-center justify-center rounded-md border bg-white p-3">
+                  {walletConnectQrCode ? (
+                    <img
+                      src={walletConnectQrCode}
+                      alt={msg.walletConnect.qrAlt}
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <div className="px-3 text-center text-xs text-muted-foreground">
+                      {walletConnectState.status === 'connecting'
+                        ? msg.walletConnect.waitingUri
+                        : msg.walletConnect.chooseWallet}
+                    </div>
+                  )}
+                </div>
+                {walletConnectState.status === 'uri_ready' ? (
+                  <div className="space-y-2">
+                    <div className="max-h-20 overflow-y-auto break-all rounded-md border bg-muted/40 p-2 font-mono text-[11px] leading-relaxed">
+                      {walletConnectState.uri}
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {walletConnectState.selectedWallet.links.native ? (
+                      <CopyButton
+                        value={walletConnectState.uri}
+                        copyLabel={msg.walletConnect.copyUri}
+                        copiedLabel={msg.manual.copied}
+                      />
+                      {walletConnectState.selectedWallet?.links?.native ? (
                         <a
                           className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium hover:bg-muted"
                           href={walletLink(
@@ -489,7 +546,7 @@ export function Playground({
                           {msg.walletConnect.openApp}
                         </a>
                       ) : null}
-                      {walletConnectState.selectedWallet.links.universal ? (
+                      {walletConnectState.selectedWallet?.links?.universal ? (
                         <a
                           className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium hover:bg-muted"
                           href={walletLink(
@@ -502,20 +559,20 @@ export function Playground({
                         </a>
                       ) : null}
                     </div>
-                  ) : null}
-                </div>
-              ) : null}
+                  </div>
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          {walletConnectError || walletConnectState.status === 'failed' ? (
-            <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-              {walletConnectError ||
-                (walletConnectState.status === 'failed'
-                  ? walletConnectState.error.message
-                  : undefined)}
-            </div>
-          ) : null}
+            {walletConnectError || walletConnectState.status === 'failed' ? (
+              <div className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                {walletConnectError ||
+                  (walletConnectState.status === 'failed'
+                    ? walletConnectState.error.message
+                    : undefined)}
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
