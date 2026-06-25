@@ -3,23 +3,17 @@
 import { StableOps } from '@stableops/api-sdk'
 import type { PaymentOrder } from '@stableops/api-sdk'
 import {
-  createWalletConnectConnection,
   getInjectedWalletProviders,
   selectWalletPaymentInstruction,
   sendWalletPayment,
-  type EvmWalletChainId,
-  type WalletConnectConnection,
-  type WalletConnectMetadata,
   type WalletProviderByChain,
 } from '@stableops/wallet-sdk'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import {
-  defaultWalletConnectMetadata,
   errMessage,
   explorerTxUrl,
   formatWalletError,
-  isEvmChainId,
   POLL_INTERVAL_MS,
   sleep,
   toWalletInstruction,
@@ -41,8 +35,6 @@ export type UsePlaygroundStateInput = {
   amount: string
   amountMode: 'exact' | 'auto'
   autoImportAddress: boolean
-  walletConnectProjectId?: string
-  walletConnectMetadata?: WalletConnectMetadata
   initialSteps: Step[]
 }
 
@@ -80,8 +72,6 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     amount,
     amountMode,
     autoImportAddress,
-    walletConnectProjectId,
-    walletConnectMetadata,
     initialSteps,
   } = input
 
@@ -102,30 +92,13 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
   // 避免旧循环的 updateStep 覆盖新订单的状态。
   const pollGenRef = useRef(0)
 
-  // WC 兜底:仅当未注入 EVM provider(典型为手机普通浏览器)且接入方提供了 projectId 时按需创建。
-  // 用 ref 而非 state:连接在异步函数闭包里使用,不需要触发重渲染。
-  const walletConnectRef = useRef<WalletConnectConnection | null>(null)
-
   const reset = useCallback(() => {
     pollGenRef.current += 1
     setOrder(null)
     setSteps(initialSteps)
     setLog([])
     setBusy(null)
-    // reset 时主动断开 WC 会话,避免下次连接残留旧 session;失败不阻塞 UI。
-    const wc = walletConnectRef.current
-    walletConnectRef.current = null
-    if (wc) void wc.disconnect().catch(() => {})
   }, [initialSteps])
-
-  // 卸载时同样断开,防止用户离开页面后 WC relay 长连接继续保持。
-  useEffect(() => {
-    return () => {
-      const wc = walletConnectRef.current
-      walletConnectRef.current = null
-      if (wc) void wc.disconnect().catch(() => {})
-    }
-  }, [])
 
   const refreshOrder = useCallback(
     async (id: string) => {
@@ -355,47 +328,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     if (!order) return
 
     const walletInstructions = order.paymentInstructions.map(toWalletInstruction)
-    let providers: WalletProviderByChain = getInjectedWalletProviders()
-
-    // 桌面浏览器插件 / 钱包内置浏览器 → providers 里已有 EVM provider,跳过 WC。
-    // 普通手机浏览器没注入 provider:订单含 EVM 链且接入方提供了 projectId 时,
-    // 通过 WalletConnect 模态框拉起已安装钱包 App 完成签名(没装钱包则降级二维码)。
-    const orderHasEvm = walletInstructions.some((i) => isEvmChainId(i.chain))
-    const hasInjectedEvm = walletInstructions.some(
-      (i) => isEvmChainId(i.chain) && providers[i.chain],
-    )
-
-    if (orderHasEvm && !hasInjectedEvm && walletConnectProjectId) {
-      setBusy('pay')
-      updateStep(1, { status: 'pending', detail: msg.status.walletConnectConnecting })
-      append(msg.log.walletConnectOpening)
-      try {
-        let wc = walletConnectRef.current
-        if (!wc) {
-          // 只声明本订单实际需要的 EVM 链,避免把所有主网/测试网协商进钱包网络列表。
-          // reset 时会清掉 walletConnectRef,新订单总会以自己的链集合重建连接。
-          const evmChains = walletInstructions
-            .filter((i) => isEvmChainId(i.chain))
-            .map((i) => i.chain as EvmWalletChainId)
-          wc = await createWalletConnectConnection({
-            projectId: walletConnectProjectId,
-            metadata: walletConnectMetadata ?? defaultWalletConnectMetadata(),
-            chains: evmChains,
-          })
-          walletConnectRef.current = wc
-          wc.onDisplayUri((uri) => append(tpl(msg.log.walletConnectUri, { uri })))
-        }
-        const accounts = await wc.connect()
-        providers = { ...providers, ...wc.providers }
-        append(tpl(msg.log.walletConnectConnected, { account: accounts[0] ?? '?' }))
-      } catch (err) {
-        const message = formatWalletError(err)
-        updateStep(1, { status: 'error', detail: message })
-        append(tpl(msg.log.walletFailed, { message }))
-        setBusy(null)
-        return
-      }
-    }
+    const providers: WalletProviderByChain = getInjectedWalletProviders()
 
     let selected: ReturnType<typeof selectWalletPaymentInstruction>
     try {
@@ -414,64 +347,6 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
       return
     }
 
-    const usesWalletConnect = walletConnectRef.current !== null
-
-    if (usesWalletConnect) {
-      // WC 路径:eth_sendTransaction 可能不通过 relay 返回 tx hash(用户已在手机上确认),
-      // 不阻塞 UI, 直接进入轮询。若后续收到返回则在后台更新步骤 2。
-      // busy='pay' 期间 Pay/Manual 按钮 disabled(见 button disabled 表达式),
-      // 由 paymentPromise.finally 释放——避免立即 setBusy(null) 让用户连点 Pay 发起多笔交易。
-      setBusy('pay')
-      updateStep(1, { status: 'pending', detail: msg.status.waitingWallet })
-      append(msg.log.wcSubmitted)
-
-      const gen = pollGenRef.current
-      const paymentPromise = sendWalletPayment({
-        provider: selected.provider,
-        amount: order.amount,
-        instruction: selected.instruction,
-        solanaRpcUrl:
-          selected.instruction.chain === 'solana-devnet'
-            ? 'https://api.devnet.solana.com'
-            : undefined,
-        // WC 通过 optionalChains 在 session 协商阶段处理了链切换，不再需要
-        // wallet_switchEthereumChain / wallet_addEthereumChain
-        skipChainSwitch: true,
-      })
-
-      // gen 检查:reset 后旧 promise resolve 不污染新订单 UI;
-      // 同时 busy 也只在自己代次内释放,避免清掉新 owner 的 busy。
-      paymentPromise
-        .then((sent) => {
-          if (gen !== pollGenRef.current) return
-          const txUrl = explorerTxUrl(selected.instruction.chain, sent.txHash)
-          updateStep(1, {
-            status: 'done',
-            detail: tpl(msg.status.txHash, { hash: sent.txHash }),
-            link: txUrl ? { href: txUrl, label: msg.status.viewTx } : undefined,
-          })
-          append(tpl(msg.log.walletSent, { hash: sent.txHash }))
-          sent.confirmation.catch((_err) => {
-            if (gen !== pollGenRef.current) return
-            append(tpl(msg.log.walletReverted, { hash: sent.txHash }))
-          })
-        })
-        .catch((err) => {
-          if (gen !== pollGenRef.current) return
-          append(tpl(msg.log.walletFailed, { message: formatWalletError(err) }))
-        })
-        .finally(() => {
-          if (gen !== pollGenRef.current) return
-          setBusy(null)
-        })
-
-      // 后台启动轮询:不 await,不阻塞 paymentPromise.finally 释放 busy。
-      // continueToFinal 是 silent,不会影响这里 setBusy('pay') 的状态。
-      continueToFinal(order.id)
-      return
-    }
-
-    // 非 WC 路径:保持原有阻塞式等待。gen 检查防止 reset 后旧 await 回到回调时污染新订单 UI。
     setBusy('pay')
     updateStep(1, { status: 'pending', detail: msg.status.waitingWallet })
     const gen = pollGenRef.current
@@ -527,8 +402,6 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     updateStep,
     continueToFinal,
     msg,
-    walletConnectProjectId,
-    walletConnectMetadata,
   ])
 
   // 手动转账路径：用户用任意钱包/交易所往收款地址转完账后点此确认。不发链上交易——

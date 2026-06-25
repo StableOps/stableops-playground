@@ -1,7 +1,7 @@
 'use client'
 
 import { StableOps } from '@stableops/api-sdk'
-import { setWalletSdkDebug, type WalletConnectMetadata } from '@stableops/wallet-sdk'
+import { setWalletSdkDebug } from '@stableops/wallet-sdk'
 import { useEffect, useMemo, useState } from 'react'
 
 import { Button, cn, Input, Label, MultiSelect } from './ui'
@@ -29,13 +29,6 @@ export type PlaygroundProps = {
   baseUrl?: string
   locale?: 'en' | 'zh'
   className?: string
-  // 启用 WalletConnect 移动端兜底：手机浏览器(非钱包内置浏览器)无 window.ethereum 时,
-  // 用 WC 模态框拉起已安装的钱包 App 完成签名。不传则只走注入式 provider 路径。
-  // 嵌入方需到 https://cloud.reown.com 免费申请 projectId,SDK 不内置任何 key。
-  walletConnectProjectId?: string
-  // 可选:覆盖 WC 模态框里显示的 dApp 名称 / 描述 / 图标。
-  // 默认基于 location.origin / document.title 自动构造,通常无需传。
-  walletConnectMetadata?: WalletConnectMetadata
 }
 
 // 是否自动导入 sandbox 地址改为内部开关（UI 控制），不再作为对外 prop——
@@ -48,8 +41,6 @@ export function Playground({
   baseUrl = DEFAULT_BASE_URL,
   locale: localeProp = 'en',
   className,
-  walletConnectProjectId,
-  walletConnectMetadata,
 }: PlaygroundProps) {
   const locale: Locale = localeProp === 'zh' ? 'zh' : 'en'
   const msg = messages[locale]
@@ -132,8 +123,6 @@ export function Playground({
     amount,
     amountMode,
     autoImportAddress,
-    walletConnectProjectId,
-    walletConnectMetadata,
     initialSteps,
   })
 

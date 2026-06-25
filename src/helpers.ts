@@ -1,6 +1,6 @@
 import { StableOpsError } from '@stableops/api-sdk'
 import type { PaymentOrderInstruction } from '@stableops/api-sdk'
-import type { WalletConnectMetadata, WalletPaymentInstruction } from '@stableops/wallet-sdk'
+import type { WalletPaymentInstruction } from '@stableops/wallet-sdk'
 
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 
@@ -68,21 +68,6 @@ const PLAYGROUND_EVM_CHAINS = new Set<WalletPaymentInstruction['chain']>([
 
 export function isEvmChainId(chain: WalletPaymentInstruction['chain']): boolean {
   return PLAYGROUND_EVM_CHAINS.has(chain)
-}
-
-// WC 模态框显示用的 dApp metadata 默认值:取自当前页 origin / title,确保 icons 有合法 URL
-// (空字符串会被 WC 拒绝)。接入方传 walletConnectMetadata 可整体覆盖。
-export function defaultWalletConnectMetadata(): WalletConnectMetadata {
-  const origin =
-    typeof location !== 'undefined' && location.origin ? location.origin : 'https://stableops.dev'
-  const title =
-    typeof document !== 'undefined' && document.title ? document.title : 'StableOps Playground'
-  return {
-    name: title,
-    description: 'StableOps payment playground',
-    url: origin,
-    icons: [`${origin}/favicon.ico`],
-  }
 }
 
 // API 错误统一抽成一行：StableOpsError 带后端 message；其余回落到 Error.message / String。

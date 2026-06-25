@@ -1,6 +1,6 @@
 {
   "name": "@stableops/playground",
-  "version": "0.4.1",
+  "version": "0.5.1",
   "private": false,
   "description": "Embeddable React playground for the StableOps payment flow — create an order, pay on-chain with a wallet, and watch it confirm, all in the browser.",
   "keywords": [
@@ -48,14 +48,8 @@
     "tailwind-merge": "^2.6.0"
   },
   "peerDependencies": {
-    "@walletconnect/ethereum-provider": "^2.21.0",
     "react": ">=18",
     "react-dom": ">=18"
-  },
-  "peerDependenciesMeta": {
-    "@walletconnect/ethereum-provider": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@eslint/js": "^9.16.0",
@@ -64,7 +58,6 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "@walletconnect/ethereum-provider": "2.23.9",
     "eslint": "^9.16.0",
     "globals": "^15.14.0",
     "react": "^19.0.0",
