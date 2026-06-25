@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 
 import { Badge, Button } from './ui'
+import { Loader2 } from 'lucide-react'
 
 export type Step = {
   label: string
@@ -44,4 +45,9 @@ export function StatusBadge({ status }: { status: Step['status'] }) {
   if (status === 'pending') return <Badge variant="secondary">running</Badge>
   if (status === 'error') return <Badge variant="destructive">error</Badge>
   return <Badge variant="outline">idle</Badge>
+}
+
+// 内联加载圈：跟随 currentColor，由调用方用 text-* 着色（WalletConnect 弹窗用品牌 teal）。
+export function Spinner({ className = '' }: { className?: string }) {
+  return <Loader2 className={`animate-spin ${className}`} />
 }

@@ -6,3 +6,4 @@ dist
 # Vite dev harness 输出（example/ 独立运行）
 example/dist
 .vite
+.env

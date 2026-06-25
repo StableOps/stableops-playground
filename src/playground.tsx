@@ -7,13 +7,14 @@ import {
   type EvmWalletChainId,
   type WalletConnectController,
   type WalletConnectControllerState,
-  type WalletConnectWalletOption,
 } from '@stableops/wallet-sdk'
 import QRCode from 'qrcode'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button, cn, Input, Label, MultiSelect } from './ui'
 import { CopyButton, StatusBadge, type Step } from './ui-bits'
+import { WALLETCONNECT_WALLETS, type PlaygroundWallet } from './wallets'
+import { WalletConnectDialog } from './walletconnect-dialog'
 import {
   DEFAULT_BASE_URL,
   chainLabel,
@@ -51,25 +52,6 @@ export type PlaygroundProps = {
 // 嵌入方常常不知道该不该开；放在 UI 里让用户当面选，且关闭时给出失败兜底提示。
 
 type DemoChain = string
-
-const WalletConnectWallets: WalletConnectWalletOption[] = [
-  {
-    id: 'metamask',
-    name: 'MetaMask',
-    links: {
-      native: 'metamask://wc?uri=',
-      universal: 'https://metamask.app.link/wc?uri=',
-    },
-  },
-  {
-    id: 'walletconnect',
-    name: 'WalletConnect',
-  },
-]
-
-function walletLink(prefix: string, uri: string): string {
-  return `${prefix}${encodeURIComponent(uri)}`
-}
 
 export function Playground({
   apiKey: apiKeyProp,
@@ -123,10 +105,18 @@ export function Playground({
     useState<WalletConnectController | null>(null)
   const [walletConnectState, setWalletConnectState] = useState<WalletConnectControllerState>({
     status: 'idle',
-    wallets: WalletConnectWallets,
+    wallets: WALLETCONNECT_WALLETS,
   })
   const [walletConnectQrCode, setWalletConnectQrCode] = useState<string | null>(null)
   const [walletConnectError, setWalletConnectError] = useState<string | null>(null)
+  // 弹窗两步视图：null=钱包列表页；非空=该钱包的二维码页（同时决定「打开 App」深链指向）。
+  const [selectedWalletConnectId, setSelectedWalletConnectId] = useState<string | null>(null)
+  // 用户在二维码页点「返回」会主动断开在途连接，使 connect() reject；据此抑制由此产生的误报错误。
+  const walletConnectCancelling = useRef(false)
+  const selectedWalletConnect = useMemo(
+    () => WALLETCONNECT_WALLETS.find((wallet) => wallet.id === selectedWalletConnectId) ?? null,
+    [selectedWalletConnectId],
+  )
 
   // 选中的测试网（按选择顺序）；为空时回落到目录首项，避免 Math.max(...[]) / 取 asset 出错。
   const selectedOptions: PlaygroundTestnet[] = useMemo(() => {
@@ -196,9 +186,10 @@ export function Playground({
     }
     let cancelled = false
     QRCode.toDataURL(walletConnectState.uri, {
-      errorCorrectionLevel: 'M',
-      margin: 1,
-      width: 224,
+      // 二维码中心叠了钱包 logo（约 20% 面积），用 H 级纠错（~30% 冗余）保证仍可扫。
+      errorCorrectionLevel: 'H',
+      margin: 2,
+      width: 320,
     })
       .then((dataUrl) => {
         if (!cancelled) setWalletConnectQrCode(dataUrl)
@@ -215,9 +206,10 @@ export function Playground({
     const controller = walletConnectController
     setWalletConnectController(null)
     setWalletConnectHidden(false)
-    setWalletConnectState({ status: 'idle', wallets: WalletConnectWallets })
+    setWalletConnectState({ status: 'idle', wallets: WALLETCONNECT_WALLETS })
     setWalletConnectQrCode(null)
     setWalletConnectError(null)
+    setSelectedWalletConnectId(null)
     if (controller) await controller.disconnect().catch(() => undefined)
   }, [walletConnectController])
 
@@ -225,7 +217,20 @@ export function Playground({
     setWalletConnectOpen(true)
     setWalletConnectHidden(false)
     setWalletConnectError(null)
+    setSelectedWalletConnectId(null)
   }, [])
+
+  // 二维码页「返回」：断开在途连接并回到钱包列表（controller 保留复用）。断开会让在途 connect()
+  // reject，用 walletConnectCancelling 抑制由此产生的误报错误；断开后下次选钱包会重新出 URI。
+  const backToWalletList = useCallback(async () => {
+    walletConnectCancelling.current = true
+    setSelectedWalletConnectId(null)
+    setWalletConnectQrCode(null)
+    setWalletConnectError(null)
+    const controller = walletConnectController
+    if (controller) await controller.disconnect().catch(() => undefined)
+    walletConnectCancelling.current = false
+  }, [walletConnectController])
 
   // Modal 打开后惰性创建 controller，并随关闭 / 链集合变化彻底 disconnect。
   // 关键：原实现每次点钱包按钮都 new 一个 controller，导致同一 tab 内多份 EthereumProvider
@@ -248,7 +253,7 @@ export function Playground({
             icons: [`${window.location.origin}/logo.svg`],
           },
           chains: walletConnectChains,
-          wallets: WalletConnectWallets,
+          wallets: WALLETCONNECT_WALLETS,
         })
         if (cancelled) {
           await controller.disconnect().catch(() => undefined)
@@ -271,18 +276,19 @@ export function Playground({
         void createdController.disconnect().catch(() => undefined)
       }
       setWalletConnectController(null)
-      setWalletConnectState({ status: 'idle', wallets: WalletConnectWallets })
+      setWalletConnectState({ status: 'idle', wallets: WALLETCONNECT_WALLETS })
       setWalletConnectQrCode(null)
     }
     // walletConnectChains 用 key 做稳定依赖；按链集合签名重建即可。
   }, [walletConnectOpen, walletConnectProjectId, walletConnectChains, walletConnectChainsKey])
 
   const connectWalletConnect = useCallback(
-    async (wallet: WalletConnectWalletOption) => {
+    async (wallet: PlaygroundWallet) => {
       if (!order || walletConnectChains.length === 0 || !walletConnectProjectId) return
       const controller = walletConnectController
       if (!controller) return
       setWalletConnectError(null)
+      setSelectedWalletConnectId(wallet.id)
       try {
         await controller.connect({ walletId: wallet.id })
         const unauthorizedChains = getUnauthorizedWalletConnectChains(
@@ -304,6 +310,8 @@ export function Playground({
         await payWithWallet(controller.providers)
         setWalletConnectOpen(false)
       } catch (err) {
+        // 用户主动返回（断开在途连接）导致的 reject 不是错误，静默忽略。
+        if (walletConnectCancelling.current) return
         setWalletConnectError(err instanceof Error ? err.message : String(err))
       }
     },
@@ -477,137 +485,24 @@ export function Playground({
         </div>
       </div>
 
-      {walletConnectOpen && !walletConnectHidden ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
-          onClick={() => {
-            setWalletConnectOpen(false)
-            void resetWalletConnect()
-          }}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="playground-walletconnect-title"
-            className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-lg border bg-background p-4 shadow-xl sm:p-5"
-            onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 space-y-1">
-                <div id="playground-walletconnect-title" className="text-sm font-semibold">
-                  {msg.walletConnect.heading}
-                </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  {!walletConnectProjectId
-                    ? msg.walletConnect.missingProjectId
-                    : walletConnectAvailable
-                      ? msg.walletConnect.hint
-                      : msg.walletConnect.noEvm}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="shrink-0"
-                onClick={() => {
-                  setWalletConnectOpen(false)
-                  void resetWalletConnect()
-                }}>
-                {msg.walletConnect.close}
-              </Button>
-            </div>
-
-            <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,300px)_minmax(260px,1fr)]">
-              <div className="space-y-2">
-                {WalletConnectWallets.map((wallet) => (
-                  <button
-                    key={wallet.id}
-                    type="button"
-                    className="flex min-h-14 w-full items-center gap-3 rounded-md border bg-muted/20 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={!walletConnectProjectId || !walletConnectAvailable}
-                    onClick={() => void connectWalletConnect(wallet)}>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-background text-xs font-semibold">
-                      {wallet.name.slice(0, 2)}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium">{wallet.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {wallet.links?.universal
-                          ? msg.walletConnect.deepLink
-                          : msg.walletConnect.scanQr}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {msg.walletConnect.qrTitle}
-                </div>
-                <div className="mx-auto flex aspect-square w-full max-w-64 items-center justify-center rounded-md border bg-white p-3">
-                  {walletConnectQrCode ? (
-                    <img
-                      src={walletConnectQrCode}
-                      alt={msg.walletConnect.qrAlt}
-                      className="h-full w-full object-contain"
-                    />
-                  ) : (
-                    <div className="px-3 text-center text-xs text-muted-foreground">
-                      {walletConnectState.status === 'connecting'
-                        ? msg.walletConnect.waitingUri
-                        : msg.walletConnect.chooseWallet}
-                    </div>
-                  )}
-                </div>
-                {walletConnectState.status === 'uri_ready' ? (
-                  <div className="space-y-2">
-                    <div className="max-h-20 overflow-y-auto break-all rounded-md border bg-muted/40 p-2 font-mono text-[11px] leading-relaxed">
-                      {walletConnectState.uri}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <CopyButton
-                        value={walletConnectState.uri}
-                        copyLabel={msg.walletConnect.copyUri}
-                        copiedLabel={msg.manual.copied}
-                      />
-                      {walletConnectState.selectedWallet?.links?.native ? (
-                        <a
-                          className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium hover:bg-muted"
-                          href={walletLink(
-                            walletConnectState.selectedWallet.links.native,
-                            walletConnectState.uri,
-                          )}>
-                          {msg.walletConnect.openApp}
-                        </a>
-                      ) : null}
-                      {walletConnectState.selectedWallet?.links?.universal ? (
-                        <a
-                          className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium hover:bg-muted"
-                          href={walletLink(
-                            walletConnectState.selectedWallet.links.universal,
-                            walletConnectState.uri,
-                          )}
-                          target="_blank"
-                          rel="noreferrer">
-                          {msg.walletConnect.openUniversal}
-                        </a>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {walletConnectError || walletConnectState.status === 'failed' ? (
-              <div className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-                {walletConnectError ||
-                  (walletConnectState.status === 'failed'
-                    ? walletConnectState.error.message
-                    : undefined)}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      <WalletConnectDialog
+        open={walletConnectOpen && !walletConnectHidden}
+        labels={msg.walletConnect}
+        copiedLabel={msg.manual.copied}
+        projectId={walletConnectProjectId}
+        available={walletConnectAvailable}
+        wallets={WALLETCONNECT_WALLETS}
+        selectedWallet={selectedWalletConnect}
+        state={walletConnectState}
+        qrCode={walletConnectQrCode}
+        error={walletConnectError}
+        onSelectWallet={(wallet) => void connectWalletConnect(wallet)}
+        onBack={() => void backToWalletList()}
+        onClose={() => {
+          setWalletConnectOpen(false)
+          void resetWalletConnect()
+        }}
+      />
 
       {order && steps[1].status !== 'done' ? (
         <div className="space-y-3 rounded-lg border bg-background/50 p-4">
