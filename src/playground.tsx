@@ -112,6 +112,7 @@ export function Playground({
   const [autoImportAddress, setAutoImportAddress] = useState(true)
   const [amountMode, setAmountMode] = useState<'exact' | 'auto'>('auto')
   const [walletConnectOpen, setWalletConnectOpen] = useState(false)
+  const [walletConnectHidden, setWalletConnectHidden] = useState(false)
   const [walletConnectController, setWalletConnectController] =
     useState<WalletConnectController | null>(null)
   const [walletConnectState, setWalletConnectState] = useState<WalletConnectControllerState>({
@@ -207,6 +208,7 @@ export function Playground({
   const resetWalletConnect = useCallback(async () => {
     const controller = walletConnectController
     setWalletConnectController(null)
+    setWalletConnectHidden(false)
     setWalletConnectState({ status: 'idle', wallets: WalletConnectWallets })
     setWalletConnectQrCode(null)
     setWalletConnectError(null)
@@ -215,6 +217,7 @@ export function Playground({
 
   const openWalletConnect = useCallback(() => {
     setWalletConnectOpen(true)
+    setWalletConnectHidden(false)
     setWalletConnectError(null)
   }, [])
 
@@ -276,6 +279,8 @@ export function Playground({
       setWalletConnectError(null)
       try {
         await controller.connect({ walletId: wallet.id })
+        // 连接成功后立即收起弹窗；controller 仍保持存活，供后续签名/广播复用。
+        setWalletConnectHidden(true)
         await payWithWallet(controller.providers)
         setWalletConnectOpen(false)
       } catch (err) {
@@ -444,7 +449,7 @@ export function Playground({
         </div>
       </div>
 
-      {walletConnectOpen ? (
+      {walletConnectOpen && !walletConnectHidden ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
           onClick={() => {
