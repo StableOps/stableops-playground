@@ -36,6 +36,8 @@ const messages = {
       qrAlt: 'WalletConnect QR code',
       waitingUri: 'Preparing WalletConnect URI…',
       chooseWallet: 'Choose a wallet to show the QR code.',
+      chainNotAuthorized:
+        'This WalletConnect session did not authorize {chains}. Close and reconnect, then select the requested network in your wallet.',
       copyUri: 'Copy URI',
       openApp: 'Open app',
       openUniversal: 'Open web link',
@@ -143,6 +145,8 @@ const messages = {
       qrAlt: 'WalletConnect 二维码',
       waitingUri: '正在准备 WalletConnect URI…',
       chooseWallet: '选择钱包后显示二维码。',
+      chainNotAuthorized:
+        '当前 WalletConnect 会话没有授权 {chains}。请关闭后重新连接，并在钱包授权页勾选请求的网络。',
       copyUri: '复制 URI',
       openApp: '打开 App',
       openUniversal: '打开网页链接',

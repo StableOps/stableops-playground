@@ -1,6 +1,10 @@
 import { StableOpsError } from '@stableops/api-sdk'
 import type { PaymentOrderInstruction } from '@stableops/api-sdk'
-import type { WalletPaymentInstruction, WalletProviderByChain } from '@stableops/wallet-sdk'
+import type {
+  EvmWalletChainId,
+  WalletPaymentInstruction,
+  WalletProviderByChain,
+} from '@stableops/wallet-sdk'
 
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 
@@ -54,6 +58,13 @@ export function mergeWalletProviders(
     if (provider) merged[chain as WalletPaymentInstruction['chain']] = provider
   }
   return merged
+}
+
+export function getUnauthorizedWalletConnectChains(
+  chains: readonly EvmWalletChainId[],
+  providers: WalletProviderByChain,
+): EvmWalletChainId[] {
+  return chains.filter((chain) => !providers[chain])
 }
 
 export function sleep(ms: number): Promise<void> {

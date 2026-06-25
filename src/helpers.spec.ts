@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { mergeWalletProviders } from './helpers'
+import { getUnauthorizedWalletConnectChains, mergeWalletProviders } from './helpers'
 
 const injectedProvider = { request: async () => 'injected' }
 const walletConnectProvider = { request: async () => 'walletconnect' }
@@ -32,5 +32,15 @@ describe('mergeWalletProviders', () => {
     )
 
     expect(merged['base-sepolia']).toBe(injectedProvider)
+  })
+})
+
+describe('getUnauthorizedWalletConnectChains', () => {
+  it('returns WalletConnect chains that are not exposed as authorized providers', () => {
+    expect(
+      getUnauthorizedWalletConnectChains(['base-sepolia', 'ethereum-sepolia'], {
+        'base-sepolia': walletConnectProvider,
+      }),
+    ).toEqual(['ethereum-sepolia'])
   })
 })

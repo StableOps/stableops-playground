@@ -14,7 +14,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button, cn, Input, Label, MultiSelect } from './ui'
 import { CopyButton, StatusBadge, type Step } from './ui-bits'
-import { DEFAULT_BASE_URL, chainLabel, isEvmChainId, tpl } from './helpers'
+import {
+  DEFAULT_BASE_URL,
+  chainLabel,
+  getUnauthorizedWalletConnectChains,
+  isEvmChainId,
+  tpl,
+} from './helpers'
 import { messages, type Locale } from './messages'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 import { usePlaygroundState } from './use-playground-state'
@@ -279,6 +285,20 @@ export function Playground({
       setWalletConnectError(null)
       try {
         await controller.connect({ walletId: wallet.id })
+        const unauthorizedChains = getUnauthorizedWalletConnectChains(
+          walletConnectChains,
+          controller.providers,
+        )
+        if (unauthorizedChains.length === walletConnectChains.length) {
+          setWalletConnectError(
+            tpl(msg.walletConnect.chainNotAuthorized, {
+              chains: unauthorizedChains
+                .map((chain) => chainLabel(chainOptions, chain))
+                .join(msg.sep),
+            }),
+          )
+          return
+        }
         // 连接成功后立即收起弹窗；controller 仍保持存活，供后续签名/广播复用。
         setWalletConnectHidden(true)
         await payWithWallet(controller.providers)
@@ -287,7 +307,15 @@ export function Playground({
         setWalletConnectError(err instanceof Error ? err.message : String(err))
       }
     },
-    [order, payWithWallet, walletConnectChains, walletConnectProjectId, walletConnectController],
+    [
+      chainOptions,
+      msg,
+      order,
+      payWithWallet,
+      walletConnectChains,
+      walletConnectProjectId,
+      walletConnectController,
+    ],
   )
 
   return (
