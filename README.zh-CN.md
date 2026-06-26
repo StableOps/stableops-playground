@@ -1,6 +1,6 @@
 # StableOps Playground
 
-可嵌入的 StableOps 支付流程 React playground。
+[![npm version](https://img.shields.io/npm/v/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![npm downloads](https://img.shields.io/npm/dm/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![License](https://img.shields.io/npm/l/@stableops/playground)](./LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org) [![Node](https://img.shields.io/badge/Node-%3E%3D18-339933)](https://nodejs.org)
 
 [English](./README.md)
 

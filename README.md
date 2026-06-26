@@ -1,6 +1,6 @@
 # StableOps Playground
 
-Embeddable React playground for the StableOps payment flow.
+[![npm version](https://img.shields.io/npm/v/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![npm downloads](https://img.shields.io/npm/dm/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![License](https://img.shields.io/npm/l/@stableops/playground)](./LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org) [![Node](https://img.shields.io/badge/Node-%3E%3D18-339933)](https://nodejs.org)
 
 [中文文档](./README.zh-CN.md)
 
