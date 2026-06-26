@@ -225,6 +225,12 @@ type RootTranslation = {
 		 */
 		hint: string
 	}
+	network: {
+		/**
+		 * A​u​t​o
+		 */
+		auto: string
+	}
 	/**
 	 * ,​ 
 	 */
@@ -696,6 +702,12 @@ export type TranslationFunctions = {
 		 * tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.
 		 */
 		hint: () => LocalizedString
+	}
+	network: {
+		/**
+		 * Auto
+		 */
+		auto: () => LocalizedString
 	}
 	/**
 	 * , 

@@ -65,6 +65,9 @@ const en = {
   noAddress: {
     hint: 'tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.',
   },
+  network: {
+    auto: 'Auto',
+  },
   sep: ', ',
   chains: {
     label: 'Chains (multi-select)',

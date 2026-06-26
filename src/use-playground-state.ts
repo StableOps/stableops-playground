@@ -1,11 +1,12 @@
 'use client'
 
-import { StableOps } from '@stableops/api-sdk'
+import { StableOps, StableOpsError } from '@stableops/api-sdk'
 import type { PaymentOrder } from '@stableops/api-sdk'
 import {
   getInjectedWalletProviders,
   selectWalletPaymentInstruction,
   sendWalletPayment,
+  type ChainId,
   type WalletProviderByChain,
 } from '@stableops/wallet-sdk'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -44,7 +45,7 @@ export type UsePlaygroundState = {
   log: string[]
   busy: string | null
   createOrder: () => Promise<void>
-  payWithWallet: (providers?: WalletProviderByChain) => Promise<void>
+  payWithWallet: (providers?: WalletProviderByChain, preferredChain?: ChainId) => Promise<void>
   markManualTransfer: () => Promise<void>
   waitForOrderStatus: (target: WaitTarget, index: number) => Promise<boolean>
   reset: () => void
@@ -228,8 +229,12 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
             merchantOrderId,
             chains: selectedOptions.map((o) => String(o.chain)),
           })
-        } catch {
-          /* 地址自举失败不阻断；真正的错误会在建单处暴露 */
+        } catch (importErr) {
+          // 套餐地址配额超限时立即抛出，让外层 catch 显示服务器真实消息；
+          // 其余网络/临时错误仍静默忽略，建单失败时会在外层补更具体的提示。
+          if (importErr instanceof StableOpsError && importErr.code === 'plan_quota_exceeded') {
+            throw importErr
+          }
         }
       }
       const created = await client.paymentOrders.create(
@@ -285,8 +290,11 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
       pollGenRef.current += 1
     } catch (err) {
       const message = errMessage(err)
-      // API 建单失败可能是免费套餐无可用地址，映射为友好提示。
-      if (/no available address/i.test(message)) {
+      // 套餐地址/用量配额超限——显示服务器原始消息，不覆盖。
+      if (err instanceof StableOpsError && err.code === 'plan_quota_exceeded') {
+        updateStep(0, { status: 'error', detail: message })
+        append(LL.log.createFailed({ error: message }))
+      } else if (/no available address/i.test(message)) {
         const nonEvm = selectedOptions.filter((o) => o.family !== 'evm')
         const hasEvm = selectedOptions.some((o) => o.family === 'evm')
         if (nonEvm.length === selectedOptions.length) {
@@ -324,85 +332,85 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     continueToFinal,
   ])
 
-  const payWithWallet = useCallback(async (extraProviders: WalletProviderByChain = {}) => {
-    if (!order) return
+  const payWithWallet = useCallback(
+    async (extraProviders: WalletProviderByChain = {}, preferredChain?: ChainId) => {
+      if (!order) return
 
-    const walletInstructions = order.paymentInstructions.map(toWalletInstruction)
-    const providers = mergeWalletProviders(getInjectedWalletProviders(), extraProviders)
+      const walletInstructions = order.paymentInstructions.map(toWalletInstruction)
+      const providers = mergeWalletProviders(getInjectedWalletProviders(), extraProviders)
 
-    let selected: ReturnType<typeof selectWalletPaymentInstruction>
-    try {
-      selected = selectWalletPaymentInstruction(walletInstructions, providers)
-    } catch {
-      updateStep(1, {
-        status: 'error',
-        detail: LL.status.walletProviderNotFound(),
-      })
-      append(
-        LL.log.providerNotFound({
-          chain: order.paymentInstructions.map((instruction) => instruction.chain).join(', '),
-        }),
-      )
-      setBusy(null)
-      return
-    }
+      let selected: ReturnType<typeof selectWalletPaymentInstruction>
+      try {
+        selected = selectWalletPaymentInstruction(
+          walletInstructions,
+          providers,
+          preferredChain ? [preferredChain] : [],
+        )
+      } catch {
+        updateStep(1, {
+          status: 'error',
+          detail: LL.status.walletProviderNotFound(),
+        })
+        append(
+          LL.log.providerNotFound({
+            chain: order.paymentInstructions.map((instruction) => instruction.chain).join(', '),
+          }),
+        )
+        setBusy(null)
+        return
+      }
 
-    setBusy('pay')
-    updateStep(1, { status: 'pending', detail: LL.status.waitingWallet() })
-    const gen = pollGenRef.current
-    try {
-      const sent = await sendWalletPayment({
-        provider: selected.provider,
-        amount: order.amount,
-        instruction: selected.instruction,
-        solanaRpcUrl:
-          selected.instruction.chain === 'solana-devnet'
-            ? 'https://api.devnet.solana.com'
-            : undefined,
-      })
-      if (gen !== pollGenRef.current) return
-
-      // 在后台监听链上确认结果：revert 时更新 UI，但若 scanner 已推进则以链上为准。
-      const guard = createConfirmationProgressGuard()
-      sent.confirmation.catch((err) => {
+      setBusy('pay')
+      updateStep(1, { status: 'pending', detail: LL.status.waitingWallet() })
+      const gen = pollGenRef.current
+      try {
+        const sent = await sendWalletPayment({
+          provider: selected.provider,
+          amount: order.amount,
+          instruction: selected.instruction,
+          solanaRpcUrl:
+            selected.instruction.chain === 'solana-devnet'
+              ? 'https://api.devnet.solana.com'
+              : undefined,
+        })
         if (gen !== pollGenRef.current) return
-        if (guard.shouldIgnoreError()) return
+
+        // 在后台监听链上确认结果：revert 时更新 UI，但若 scanner 已推进则以链上为准。
+        const guard = createConfirmationProgressGuard()
+        sent.confirmation.catch((err) => {
+          if (gen !== pollGenRef.current) return
+          if (guard.shouldIgnoreError()) return
+          const message = formatWalletError(err)
+          updateStep(1, { status: 'error', detail: message })
+          append(LL.log.walletReverted({ hash: sent.txHash }))
+        })
+
+        // 用所支付链的区块浏览器拼出交易详情页链接，方便用户点开核对这笔链上转账。
+        const txUrl = explorerTxUrl(selected.instruction.chain, sent.txHash)
+        updateStep(1, {
+          status: 'done',
+          detail: LL.status.txHash({ hash: sent.txHash }),
+          link: txUrl ? { href: txUrl, label: LL.status.viewTx() } : undefined,
+        })
+        append(LL.log.walletSent({ hash: sent.txHash }))
+        const fresh = await refreshOrder(order.id)
+        if (gen !== pollGenRef.current) return
+        // 如果服务端已推进（refreshOrder 返回非 created），立即标记避免异步 confirmation reject 冲突。
+        if (fresh && fresh.status !== 'created') guard.markProgressed()
+        // 由这里接管 detected→confirmed→finalized 接力。
+        await continueToFinal(order.id)
+        guard.markProgressed()
+      } catch (err) {
+        if (gen !== pollGenRef.current) return
         const message = formatWalletError(err)
         updateStep(1, { status: 'error', detail: message })
-        append(LL.log.walletReverted({ hash: sent.txHash }))
-      })
-
-      // 用所支付链的区块浏览器拼出交易详情页链接，方便用户点开核对这笔链上转账。
-      const txUrl = explorerTxUrl(selected.instruction.chain, sent.txHash)
-      updateStep(1, {
-        status: 'done',
-        detail: LL.status.txHash({ hash: sent.txHash }),
-        link: txUrl ? { href: txUrl, label: LL.status.viewTx() } : undefined,
-      })
-      append(LL.log.walletSent({ hash: sent.txHash }))
-      const fresh = await refreshOrder(order.id)
-      if (gen !== pollGenRef.current) return
-      // 如果服务端已推进（refreshOrder 返回非 created），立即标记避免异步 confirmation reject 冲突。
-      if (fresh && fresh.status !== 'created') guard.markProgressed()
-      // 由这里接管 detected→confirmed→finalized 接力。
-      await continueToFinal(order.id)
-      guard.markProgressed()
-    } catch (err) {
-      if (gen !== pollGenRef.current) return
-      const message = formatWalletError(err)
-      updateStep(1, { status: 'error', detail: message })
-      append(LL.log.walletFailed({ message }))
-    } finally {
-      if (gen === pollGenRef.current) setBusy(null)
-    }
-  }, [
-    append,
-    order,
-    refreshOrder,
-    updateStep,
-    continueToFinal,
-    LL,
-  ])
+        append(LL.log.walletFailed({ message }))
+      } finally {
+        if (gen === pollGenRef.current) setBusy(null)
+      }
+    },
+    [append, order, refreshOrder, updateStep, continueToFinal, LL],
+  )
 
   // 手动转账路径：用户用任意钱包/交易所往收款地址转完账后点此确认。不发链上交易——
   // 只把第 2 步标记为 done 解锁后续轮询，真正的入金仍由 scanner 按地址唯一匹配检测。

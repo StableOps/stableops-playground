@@ -1,6 +1,6 @@
 'use client'
 
-import { StableOps } from '@stableops/api-sdk'
+import { StableOps, type ChainId } from '@stableops/api-sdk'
 import {
   createWalletConnectController,
   setWalletSdkDebug,
@@ -102,6 +102,7 @@ export function Playground({
   // 自动导入 sandbox 收款地址：默认开启；关闭时改用 org 已有地址，并在 UI / 失败日志里提示如何补救。
   const [autoImportAddress, setAutoImportAddress] = useState(true)
   const [amountMode, setAmountMode] = useState<'exact' | 'auto'>('auto')
+  const [selectedPayChain, setSelectedPayChain] = useState<ChainId | null>(null)
   const [walletConnectOpen, setWalletConnectOpen] = useState(false)
   const [walletConnectHidden, setWalletConnectHidden] = useState(false)
   const [walletConnectController, setWalletConnectController] =
@@ -163,6 +164,20 @@ export function Playground({
     autoImportAddress,
     initialSteps,
   })
+
+  // 订单支付时可选的链（去重），作为支付网络选择器的数据源。
+  const payChainOptions = useMemo(() => {
+    if (!order) return []
+    return Array.from(new Set(order.paymentInstructions.map((pi) => pi.chain)))
+  }, [order])
+
+  // 订单变化时，若当前支付网络选择不在新订单的可用链中，回退自动。
+  useEffect(() => {
+    if (selectedPayChain && order && !payChainOptions.includes(selectedPayChain)) {
+      setSelectedPayChain(null)
+    }
+  }, [order, payChainOptions, selectedPayChain])
+
   const walletConnectChains = useMemo(() => {
     if (!order) return []
     return Array.from(
@@ -310,7 +325,7 @@ export function Playground({
         }
         // 连接成功后立即收起弹窗；controller 仍保持存活，供后续签名/广播复用。
         setWalletConnectHidden(true)
-        await payWithWallet(controller.providers)
+        await payWithWallet(controller.providers, selectedPayChain ?? undefined)
         setWalletConnectOpen(false)
       } catch (err) {
         // 用户主动返回（断开在途连接）导致的 reject 不是错误，静默忽略。
@@ -323,6 +338,7 @@ export function Playground({
       LL,
       order,
       payWithWallet,
+      selectedPayChain,
       walletConnectChains,
       walletConnectProjectId,
       walletConnectController,
@@ -430,7 +446,8 @@ export function Playground({
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => void payWithWallet()}
+            onClick={() => void payWithWallet(undefined, selectedPayChain ?? undefined)}
+
             disabled={!order || busy === 'create' || busy === 'pay' || steps[1].status === 'done'}>
             {busy === 'pay' ? LL.actions.paying() : LL.actions.pay()}
           </Button>
@@ -506,6 +523,36 @@ export function Playground({
           void resetWalletConnect()
         }}
       />
+
+      {order && steps[1].status !== 'done' ? (
+        <div className="space-y-3 rounded-lg border bg-background/50 p-4">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setSelectedPayChain(null)}
+              className={`cursor-pointer rounded-full border px-2 py-0.5 transition ${
+                selectedPayChain === null
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}>
+              {LL.network.auto()}
+            </button>
+            {payChainOptions.map((chain) => (
+              <button
+                key={chain}
+                type="button"
+                onClick={() => setSelectedPayChain(chain)}
+                className={`cursor-pointer rounded-full border px-2 py-0.5 font-mono transition ${
+                  selectedPayChain === chain
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground'
+                }`}>
+                {chainLabel(chainOptions, chain)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {order && steps[1].status !== 'done' ? (
         <div className="space-y-3 rounded-lg border bg-background/50 p-4">

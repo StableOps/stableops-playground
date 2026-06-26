@@ -64,6 +64,9 @@ const zh = {
   noAddress: {
     hint: '提示：如果建单失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
   },
+  network: {
+    auto: '自动',
+  },
   sep: '、',
   chains: {
     label: '链（可多选）',
