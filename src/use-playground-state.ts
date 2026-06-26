@@ -18,18 +18,17 @@ import {
   POLL_INTERVAL_MS,
   sleep,
   toWalletInstruction,
-  tpl,
 } from './helpers'
 import { importSandboxAddress } from './sandbox-address'
 import { isAcceptedOrderStatus, isFailedTerminalOrderStatus, type WaitTarget } from './order-status'
-import type { Messages } from './messages'
 import type { PlaygroundTestnet } from './testnets'
 import type { Step } from './ui-bits'
+import type { TranslationFunctions } from './i18n/i18n-types.js'
 import { createConfirmationProgressGuard } from './wallet-confirmation-guard'
 
 export type UsePlaygroundStateInput = {
   client: StableOps | null
-  msg: Messages
+  LL: TranslationFunctions
   selectedOptions: PlaygroundTestnet[]
   trimmedKey: string
   baseUrl: string
@@ -66,7 +65,7 @@ export type UsePlaygroundState = {
 export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroundState {
   const {
     client,
-    msg,
+    LL,
     selectedOptions,
     trimmedKey,
     baseUrl,
@@ -111,11 +110,11 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         setOrder((prev) => (prev && prev.id === id ? fresh : prev))
         return fresh
       } catch (err) {
-        append(tpl(msg.log.refreshFailed, { error: errMessage(err) }))
+        append(LL.log.refreshFailed({ error: errMessage(err) }))
         return null
       }
     },
-    [client, append, msg],
+    [client, append, LL],
   )
 
   const waitForOrderStatus = useCallback(
@@ -142,7 +141,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
       if (!silent) setBusy(target)
       updateStep(index, {
         status: 'pending',
-        detail: tpl(msg.status.polling, {
+        detail: LL.status.polling({
           target,
           seconds: String(Math.round(timeoutMs / 1000)),
         }),
@@ -155,20 +154,20 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
           const fresh = await refreshOrder(id)
           if (!fresh || pollGenRef.current !== gen) return false
           const status = fresh?.status ?? 'unknown'
-          append(tpl(msg.log.orderStatus, { status }))
+          append(LL.log.orderStatus({ status }))
           if (isAcceptedOrderStatus(target, status)) {
             updateStep(index, {
               status: 'done',
-              detail: tpl(msg.status.orderStatus, { status }),
+              detail: LL.status.orderStatus({ status }),
             })
             return true
           }
           if (isFailedTerminalOrderStatus(status)) {
             updateStep(index, {
               status: 'error',
-              detail: tpl(msg.status.terminalStatus, { target, status }),
+              detail: LL.status.terminalStatus({ target, status }),
             })
-            append(tpl(msg.log.waitTerminalStatus, { target, status }))
+            append(LL.log.waitTerminalStatus({ target, status }))
             return false
           }
           await sleep(POLL_INTERVAL_MS)
@@ -176,15 +175,15 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         if (pollGenRef.current !== gen) return false
         updateStep(index, {
           status: 'error',
-          detail: tpl(msg.status.timeout, { target }),
+          detail: LL.status.timeout({ target }),
         })
-        append(tpl(msg.log.waitTimedOut, { target }))
+        append(LL.log.waitTimedOut({ target }))
         return false
       } finally {
         if (!silent) setBusy(null)
       }
     },
-    [append, order, refreshOrder, updateStep, selectedOptions, msg],
+    [append, order, refreshOrder, updateStep, selectedOptions, LL],
   )
 
   // 暴露给外部的简化签名:不需要 orderId/silent。手动 wait 按钮的回调直接绑这个。
@@ -211,8 +210,8 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
 
   const createOrder = useCallback(async () => {
     if (!client) {
-      updateStep(0, { status: 'error', detail: msg.status.missingKey })
-      append(msg.log.missingKey)
+      updateStep(0, { status: 'error', detail: LL.status.missingKey() })
+      append(LL.log.missingKey())
       return
     }
     setBusy('create')
@@ -256,17 +255,17 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
           (opt) => opt.family === 'evm' && allocatedChains.has(opt.chain),
         )
         if (nonEvm.length === dropped.length && !hasEvmAllocated) {
-          updateStep(0, { status: 'error', detail: msg.dropped.nonEvmOnly })
-          append(msg.dropped.nonEvmOnly)
+          updateStep(0, { status: 'error', detail: LL.dropped.nonEvmOnly() })
+          append(LL.dropped.nonEvmOnly())
         } else if (nonEvm.length > 0 && hasEvmAllocated) {
-          const detail = tpl(msg.dropped.nonEvmMix, {
-            chains: nonEvm.map((o) => o.label).join(msg.sep),
+          const detail = LL.dropped.nonEvmMix({
+            chains: nonEvm.map((o) => o.label).join(LL.sep()),
           })
           updateStep(0, { status: 'error', detail })
           append(detail)
         } else {
-          updateStep(0, { status: 'error', detail: msg.dropped.fallback })
-          append(msg.dropped.fallback)
+          updateStep(0, { status: 'error', detail: LL.dropped.fallback() })
+          append(LL.dropped.fallback())
         }
         return
       }
@@ -279,7 +278,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
           instructionCount > 1 ? ` (+${instructionCount - 1})` : ''
         }`,
       })
-      append(tpl(msg.log.orderCreated, { id: created.id, status: created.status }))
+      append(LL.log.orderCreated({ id: created.id, status: created.status }))
       // 不在这里启动 detected 轮询:用户可能慢悠悠才打开钱包/手动转账,提前倒计时会
       // 把"用户还没付钱"误报成"detected 超时"。轮询的真正起点是 payWithWallet 钱包
       // 返回 tx hash 之后,或 markManualTransfer 用户点确认之后,见各自分支。
@@ -291,22 +290,22 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         const nonEvm = selectedOptions.filter((o) => o.family !== 'evm')
         const hasEvm = selectedOptions.some((o) => o.family === 'evm')
         if (nonEvm.length === selectedOptions.length) {
-          append(msg.dropped.nonEvmOnly)
-          updateStep(0, { status: 'error', detail: msg.dropped.nonEvmOnly })
+          append(LL.dropped.nonEvmOnly())
+          updateStep(0, { status: 'error', detail: LL.dropped.nonEvmOnly() })
         } else if (nonEvm.length > 0 && hasEvm) {
-          const detail = tpl(msg.dropped.nonEvmMix, {
-            chains: nonEvm.map((o) => o.label).join(msg.sep),
+          const detail = LL.dropped.nonEvmMix({
+            chains: nonEvm.map((o) => o.label).join(LL.sep()),
           })
           append(detail)
           updateStep(0, { status: 'error', detail })
         } else {
-          append(msg.dropped.fallback)
-          updateStep(0, { status: 'error', detail: msg.dropped.fallback })
+          append(LL.dropped.fallback())
+          updateStep(0, { status: 'error', detail: LL.dropped.fallback() })
         }
       } else {
         updateStep(0, { status: 'error', detail: message })
-        append(tpl(msg.log.createFailed, { error: message }))
-        if (!autoImportAddress) append(msg.noAddress.hint)
+        append(LL.log.createFailed({ error: message }))
+        if (!autoImportAddress) append(LL.noAddress.hint())
       }
     } finally {
       setBusy(null)
@@ -321,7 +320,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     selectedOptions,
     updateStep,
     append,
-    msg,
+    LL,
     continueToFinal,
   ])
 
@@ -337,10 +336,10 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     } catch {
       updateStep(1, {
         status: 'error',
-        detail: msg.status.walletProviderNotFound,
+        detail: LL.status.walletProviderNotFound(),
       })
       append(
-        tpl(msg.log.providerNotFound, {
+        LL.log.providerNotFound({
           chain: order.paymentInstructions.map((instruction) => instruction.chain).join(', '),
         }),
       )
@@ -349,7 +348,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     }
 
     setBusy('pay')
-    updateStep(1, { status: 'pending', detail: msg.status.waitingWallet })
+    updateStep(1, { status: 'pending', detail: LL.status.waitingWallet() })
     const gen = pollGenRef.current
     try {
       const sent = await sendWalletPayment({
@@ -370,17 +369,17 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         if (guard.shouldIgnoreError()) return
         const message = formatWalletError(err)
         updateStep(1, { status: 'error', detail: message })
-        append(tpl(msg.log.walletReverted, { hash: sent.txHash }))
+        append(LL.log.walletReverted({ hash: sent.txHash }))
       })
 
       // 用所支付链的区块浏览器拼出交易详情页链接，方便用户点开核对这笔链上转账。
       const txUrl = explorerTxUrl(selected.instruction.chain, sent.txHash)
       updateStep(1, {
         status: 'done',
-        detail: tpl(msg.status.txHash, { hash: sent.txHash }),
-        link: txUrl ? { href: txUrl, label: msg.status.viewTx } : undefined,
+        detail: LL.status.txHash({ hash: sent.txHash }),
+        link: txUrl ? { href: txUrl, label: LL.status.viewTx() } : undefined,
       })
-      append(tpl(msg.log.walletSent, { hash: sent.txHash }))
+      append(LL.log.walletSent({ hash: sent.txHash }))
       const fresh = await refreshOrder(order.id)
       if (gen !== pollGenRef.current) return
       // 如果服务端已推进（refreshOrder 返回非 created），立即标记避免异步 confirmation reject 冲突。
@@ -392,7 +391,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
       if (gen !== pollGenRef.current) return
       const message = formatWalletError(err)
       updateStep(1, { status: 'error', detail: message })
-      append(tpl(msg.log.walletFailed, { message }))
+      append(LL.log.walletFailed({ message }))
     } finally {
       if (gen === pollGenRef.current) setBusy(null)
     }
@@ -402,19 +401,19 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     refreshOrder,
     updateStep,
     continueToFinal,
-    msg,
+    LL,
   ])
 
   // 手动转账路径：用户用任意钱包/交易所往收款地址转完账后点此确认。不发链上交易——
   // 只把第 2 步标记为 done 解锁后续轮询，真正的入金仍由 scanner 按地址唯一匹配检测。
   const markManualTransfer = useCallback(async () => {
     if (!order) return
-    updateStep(1, { status: 'done', detail: msg.manual.done })
-    append(msg.log.manualConfirmed)
+    updateStep(1, { status: 'done', detail: LL.manual.done() })
+    append(LL.log.manualConfirmed())
     await refreshOrder(order.id)
     // 手动确认后接管 detected→confirmed→finalized 接力。
     await continueToFinal(order.id)
-  }, [append, order, refreshOrder, updateStep, continueToFinal, msg])
+  }, [append, order, refreshOrder, updateStep, continueToFinal, LL])
 
   return useMemo(
     () => ({

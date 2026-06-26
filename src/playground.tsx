@@ -20,11 +20,14 @@ import {
   chainLabel,
   getUnauthorizedWalletConnectChains,
   isEvmChainId,
-  tpl,
 } from './helpers'
-import { messages, type Locale } from './messages'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 import { usePlaygroundState } from './use-playground-state'
+
+import { loadAllLocales } from './i18n/i18n-util.sync.js'
+import { i18nObject } from './i18n/i18n-util.js'
+import type { Locales } from './i18n/i18n-types.js'
+loadAllLocales()
 
 // 独立、可嵌入的 StableOps playground：在浏览器里走一遍「建单 → 钱包链上支付 → 确认 → 终局」。
 // 直接用 @stableops/api-sdk + 调用方提供的 API Key 调真实 API（建单 / 查单 / 地址导入），
@@ -60,8 +63,8 @@ export function Playground({
   locale: localeProp = 'en',
   className,
 }: PlaygroundProps) {
-  const locale: Locale = localeProp === 'zh' ? 'zh' : 'en'
-  const msg = messages[locale]
+  const locale: Locales = localeProp === 'zh' ? 'zh' : 'en'
+  const LL = i18nObject(locale)
 
   const [apiKey, setApiKey] = useState(apiKeyProp ?? '')
   const trimmedKey = apiKey.trim()
@@ -83,13 +86,13 @@ export function Playground({
 
   const initialSteps: Step[] = useMemo(
     () => [
-      { label: msg.steps.create, status: 'idle' as const },
-      { label: msg.steps.pay, status: 'idle' as const },
-      { label: msg.steps.waitDetected, status: 'idle' as const },
-      { label: msg.steps.waitConfirmed, status: 'idle' as const },
-      { label: msg.steps.waitFinalized, status: 'idle' as const },
+      { label: LL.steps.create(), status: 'idle' as const },
+      { label: LL.steps.pay(), status: 'idle' as const },
+      { label: LL.steps.waitDetected(), status: 'idle' as const },
+      { label: LL.steps.waitConfirmed(), status: 'idle' as const },
+      { label: LL.steps.waitFinalized(), status: 'idle' as const },
     ],
-    [msg],
+    [LL],
   )
 
   const [amount, setAmount] = useState('0.01')
@@ -151,7 +154,7 @@ export function Playground({
     reset,
   } = usePlaygroundState({
     client,
-    msg,
+    LL,
     selectedOptions,
     trimmedKey,
     baseUrl,
@@ -297,10 +300,10 @@ export function Playground({
         )
         if (unauthorizedChains.length === walletConnectChains.length) {
           setWalletConnectError(
-            tpl(msg.walletConnect.chainNotAuthorized, {
+            LL.walletConnect.chainNotAuthorized({
               chains: unauthorizedChains
                 .map((chain) => chainLabel(chainOptions, chain))
-                .join(msg.sep),
+                .join(LL.sep()),
             }),
           )
           return
@@ -317,7 +320,7 @@ export function Playground({
     },
     [
       chainOptions,
-      msg,
+      LL,
       order,
       payWithWallet,
       walletConnectChains,
@@ -331,7 +334,7 @@ export function Playground({
       <div className="flex flex-col gap-4 rounded-lg border bg-muted/20 p-4">
         <div className="space-y-2">
           <Label htmlFor="playground-api-key" className="text-sm font-medium">
-            {msg.apiKey.label}
+            {LL.apiKey.label()}
           </Label>
           <Input
             id="playground-api-key"
@@ -339,11 +342,11 @@ export function Playground({
             autoComplete="off"
             spellCheck={false}
             className="h-10 w-full bg-background font-mono"
-            placeholder={msg.apiKey.placeholder}
+            placeholder={LL.apiKey.placeholder()}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">{msg.apiKey.hint}</p>
+          <p className="text-xs text-muted-foreground">{LL.apiKey.hint()}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-4 sm:items-start">
@@ -361,7 +364,7 @@ export function Playground({
           </div>
           <div className="space-y-2 col-span-2">
             <Label htmlFor="playground-chain" className="text-sm font-medium">
-              {msg.chains.label}
+              {LL.chains.label()}
             </Label>
             <MultiSelect
               id="playground-chain"
@@ -371,20 +374,20 @@ export function Playground({
               }))}
               value={chains}
               onChange={(next) => setChains(next as DemoChain[])}
-              placeholder={msg.chains.placeholder}
+              placeholder={LL.chains.placeholder()}
               disabled={Boolean(order)}
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-medium">{msg.amountMode.label}</Label>
+            <Label className="text-sm font-medium">{LL.amountMode.label()}</Label>
             <MultiSelect
               options={[
-                { value: 'exact', label: msg.amountMode.exact },
-                { value: 'auto', label: msg.amountMode.auto },
+                { value: 'exact', label: LL.amountMode.exact() },
+                { value: 'auto', label: LL.amountMode.auto() },
               ]}
               value={[amountMode]}
               onChange={(next) => setAmountMode(next[next.length - 1] as 'exact' | 'auto')}
-              placeholder={msg.amountMode.label}
+              placeholder={LL.amountMode.label()}
               disabled={Boolean(order)}
             />
           </div>
@@ -398,12 +401,12 @@ export function Playground({
               onChange={(e) => setAutoImportAddress(e.target.checked)}
               disabled={Boolean(order) || busy !== null}
             />
-            <span className="font-medium">{msg.autoImport.label}</span>
+            <span className="font-medium">{LL.autoImport.label()}</span>
           </label>
-          <p className="pl-6 text-xs text-muted-foreground">{msg.autoImport.hint}</p>
+          <p className="pl-6 text-xs text-muted-foreground">{LL.autoImport.hint()}</p>
         </div>
         <p className="text-xs text-muted-foreground">
-          {msg.faucet.prefix}
+          {LL.faucet.prefix()}
           {selectedOptions.map((option, i) => (
             <span key={`${option.chain}:${option.asset}`}>
               {i > 0 ? ' · ' : ''}
@@ -422,14 +425,14 @@ export function Playground({
             size="sm"
             onClick={createOrder}
             disabled={Boolean(order) || busy !== null || !trimmedKey || chains.length === 0}>
-            {busy === 'create' ? msg.actions.creating : msg.actions.createOrder}
+            {busy === 'create' ? LL.actions.creating() : LL.actions.createOrder()}
           </Button>
           <Button
             size="sm"
             variant="secondary"
             onClick={() => void payWithWallet()}
             disabled={!order || busy === 'create' || busy === 'pay' || steps[1].status === 'done'}>
-            {busy === 'pay' ? msg.actions.paying : msg.actions.pay}
+            {busy === 'pay' ? LL.actions.paying() : LL.actions.pay()}
           </Button>
           <Button
             size="sm"
@@ -443,14 +446,14 @@ export function Playground({
               !walletConnectProjectId ||
               !walletConnectAvailable
             }>
-            {msg.walletConnect.button}
+            {LL.walletConnect.button()}
           </Button>
           <Button
             size="sm"
             variant="secondary"
             onClick={markManualTransfer}
             disabled={!order || busy === 'create' || busy === 'pay' || steps[1].status === 'done'}>
-            {msg.actions.confirmManual}
+            {LL.actions.confirmManual()}
           </Button>
           <Button
             size="sm"
@@ -459,7 +462,7 @@ export function Playground({
             disabled={
               !order || busy !== null || steps[1].status !== 'done' || steps[2].status === 'done'
             }>
-            {busy === 'detected' ? msg.actions.polling : msg.actions.waitDetected}
+            {busy === 'detected' ? LL.actions.polling() : LL.actions.waitDetected()}
           </Button>
           <Button
             size="sm"
@@ -468,7 +471,7 @@ export function Playground({
             disabled={
               !order || busy !== null || steps[2].status !== 'done' || steps[3].status === 'done'
             }>
-            {busy === 'confirmed' ? msg.actions.polling : msg.actions.waitConfirmed}
+            {busy === 'confirmed' ? LL.actions.polling() : LL.actions.waitConfirmed()}
           </Button>
           <Button
             size="sm"
@@ -477,18 +480,18 @@ export function Playground({
             disabled={
               !order || busy !== null || steps[3].status !== 'done' || steps[4].status === 'done'
             }>
-            {busy === 'finalized' ? msg.actions.polling : msg.actions.waitFinalized}
+            {busy === 'finalized' ? LL.actions.polling() : LL.actions.waitFinalized()}
           </Button>
           <Button size="sm" variant="ghost" onClick={reset} disabled={busy === 'create'}>
-            {msg.actions.reset}
+            {LL.actions.reset()}
           </Button>
         </div>
       </div>
 
       <WalletConnectDialog
         open={walletConnectOpen && !walletConnectHidden}
-        labels={msg.walletConnect}
-        copiedLabel={msg.manual.copied}
+        labels={LL.walletConnect}
+        copiedLabel={LL.manual.copied()}
         projectId={walletConnectProjectId}
         available={walletConnectAvailable}
         wallets={WALLETCONNECT_WALLETS}
@@ -506,11 +509,11 @@ export function Playground({
 
       {order && steps[1].status !== 'done' ? (
         <div className="space-y-3 rounded-lg border bg-background/50 p-4">
-          <div className="text-sm font-medium">{msg.manual.heading}</div>
+          <div className="text-sm font-medium">{LL.manual.heading()}</div>
           {order.paymentInstructions.map((instruction) => (
             <div key={`${instruction.chain}:${instruction.address}`} className="space-y-1.5">
               <div className="text-xs text-muted-foreground">
-                {tpl(msg.manual.sendTo, {
+                {LL.manual.sendTo({
                   amount: order.amount,
                   asset: instruction.asset,
                   chain: chainLabel(chainOptions, instruction.chain),
@@ -522,13 +525,13 @@ export function Playground({
                 </code>
                 <CopyButton
                   value={instruction.address}
-                  copyLabel={msg.manual.copy}
-                  copiedLabel={msg.manual.copied}
+                  copyLabel={LL.manual.copy()}
+                  copiedLabel={LL.manual.copied()}
                 />
               </div>
             </div>
           ))}
-          <p className="text-xs text-muted-foreground">{msg.manual.hint}</p>
+          <p className="text-xs text-muted-foreground">{LL.manual.hint()}</p>
         </div>
       ) : null}
 
@@ -577,7 +580,7 @@ export function Playground({
 
       <p
         className="text-sm text-muted-foreground"
-        dangerouslySetInnerHTML={{ __html: msg.footer }}
+        dangerouslySetInnerHTML={{ __html: LL.footer() }}
       />
     </div>
   )

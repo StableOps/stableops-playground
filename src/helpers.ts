@@ -12,11 +12,6 @@ import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 export const POLL_INTERVAL_MS = 5_000
 export const DEFAULT_BASE_URL = 'https://api.stableops.dev'
 
-// `{key}` 占位符替换:i18n 字典里的所有动态串都走这条。漏键时原样保留 `{key}`,便于排查。
-export function tpl(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? `{${key}}`)
-}
-
 // 用测试网目录把链 id 渲染成可读标签，找不到则回落到链 id 本身。
 export function chainLabel(options: readonly PlaygroundTestnet[], chain: string): string {
   return options.find((option) => option.chain === chain)?.label ?? chain

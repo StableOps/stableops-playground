@@ -34,6 +34,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc",
+    "i18n": "typesafe-i18n --no-watch",
     "prepublishOnly": "pnpm build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -48,7 +49,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "qrcode": "^1.5.4",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "typesafe-i18n": "^5.27.1"
   },
   "peerDependencies": {
     "react": ">=18",
