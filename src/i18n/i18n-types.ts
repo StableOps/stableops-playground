@@ -46,11 +46,11 @@ type RootTranslation = {
 		 */
 		createOrder: string
 		/**
-		 * O​p​e​n​ ​w​a​l​l​e​t​…
+		 * O​p​e​n​ ​b​r​o​w​s​e​r​ ​w​a​l​l​e​t​…
 		 */
 		paying: string
 		/**
-		 * 2​.​ ​P​a​y​ ​w​i​t​h​ ​w​a​l​l​e​t
+		 * 2​.​ ​B​r​o​w​s​e​r​ ​w​a​l​l​e​t
 		 */
 		pay: string
 		/**
@@ -187,7 +187,7 @@ type RootTranslation = {
 		 */
 		placeholder: string
 		/**
-		 * U​s​e​ ​a​ ​s​a​n​d​b​o​x​ ​k​e​y​.​ ​I​t​ ​s​t​a​y​s​ ​i​n​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​a​n​d​ ​i​s​ ​s​e​n​t​ ​d​i​r​e​c​t​l​y​ ​t​o​ ​t​h​e​ ​A​P​I​.
+		 * U​s​e​ ​a​ ​s​a​n​d​b​o​x​ ​k​e​y​.​ ​I​t​ ​s​t​a​y​s​ ​i​n​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​a​n​d​ ​i​s​ ​s​e​n​t​ ​d​i​r​e​c​t​l​y​ ​t​o​ ​t​h​e​ ​A​P​I​.​ ​I​n​ ​p​r​o​d​u​c​t​i​o​n​,​ ​c​a​l​l​ ​t​h​e​ ​A​P​I​ ​f​r​o​m​ ​y​o​u​r​ ​b​a​c​k​e​n​d​,​ ​n​o​t​ ​t​h​e​ ​b​r​o​w​s​e​r​.
 		 */
 		hint: string
 	}
@@ -375,6 +375,121 @@ type RootTranslation = {
 	 * T​h​i​s​ ​p​l​a​y​g​r​o​u​n​d​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​a​p​i​-​s​d​k​<​/​c​o​d​e​>​ ​d​i​r​e​c​t​l​y​ ​f​r​o​m​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​w​i​t​h​ ​t​h​e​ ​A​P​I​ ​k​e​y​ ​y​o​u​ ​p​r​o​v​i​d​e​.​ ​S​t​e​p​ ​2​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​w​a​l​l​e​t​-​s​d​k​<​/​c​o​d​e​>​ ​t​o​ ​a​s​k​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​w​a​l​l​e​t​ ​t​o​ ​s​e​n​d​ ​a​ ​r​e​a​l​ ​t​e​s​t​n​e​t​ ​t​r​a​n​s​a​c​t​i​o​n​ ​—​ ​o​r​ ​y​o​u​ ​c​a​n​ ​s​k​i​p​ ​t​h​e​ ​w​a​l​l​e​t​,​ ​t​r​a​n​s​f​e​r​ ​t​o​ ​t​h​e​ ​s​h​o​w​n​ ​a​d​d​r​e​s​s​ ​f​r​o​m​ ​a​n​y​ ​w​a​l​l​e​t​/​e​x​c​h​a​n​g​e​,​ ​a​n​d​ ​c​l​i​c​k​ ​"​I​'​v​e​ ​s​e​n​t​ ​i​t​ ​m​a​n​u​a​l​l​y​"​.​ ​O​r​d​e​r​s​ ​a​d​v​a​n​c​e​ ​t​o​ ​d​e​t​e​c​t​e​d​ ​/​ ​c​o​n​f​i​r​m​e​d​ ​/​ ​f​i​n​a​l​i​z​e​d​ ​v​i​a​ ​t​h​e​ ​s​c​a​n​n​e​r​ ​a​n​d​ ​c​o​n​f​i​r​m​a​t​i​o​n​s​ ​w​a​t​c​h​e​r​.​ ​I​n​ ​s​a​n​d​b​o​x​ ​(​t​e​s​t​n​e​t​)​,​ ​i​f​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​ ​y​e​t​,​ ​o​n​e​ ​i​s​ ​a​u​t​o​-​c​r​e​a​t​e​d​ ​f​o​r​ ​t​h​i​s​ ​o​r​d​e​r​.​ ​U​s​e​ ​a​ ​s​a​n​d​b​o​x​ ​k​e​y​ ​o​n​l​y​ ​—​ ​n​e​v​e​r​ ​p​a​s​t​e​ ​a​ ​l​i​v​e​ ​k​e​y​ ​i​n​t​o​ ​a​ ​b​r​o​w​s​e​r​.​ ​<​a​ ​h​r​e​f​=​"​h​t​t​p​s​:​/​/​g​i​t​l​a​b​.​c​o​m​/​S​t​a​b​l​e​O​p​s​/​s​t​a​b​l​e​o​p​s​-​p​l​a​y​g​r​o​u​n​d​"​ ​t​a​r​g​e​t​=​"​_​b​l​a​n​k​"​ ​r​e​l​=​"​n​o​r​e​f​e​r​r​e​r​"​ ​c​l​a​s​s​=​"​u​n​d​e​r​l​i​n​e​ ​u​n​d​e​r​l​i​n​e​-​o​f​f​s​e​t​-​2​"​>​V​i​e​w​ ​s​o​u​r​c​e​ ​o​n​ ​G​i​t​L​a​b​<​/​a​>​.
 	 */
 	footer: string
+	checkout: {
+		/**
+		 * A​P​I​ ​K​e​y
+		 */
+		apiKey: string
+		/**
+		 * P​a​s​t​e​ ​y​o​u​r​ ​s​a​n​d​b​o​x​ ​A​P​I​ ​k​e​y​ ​(​s​k​_​s​a​n​d​b​o​x​_​…​)
+		 */
+		apiKeyPlaceholder: string
+		/**
+		 * F​o​r​ ​d​o​c​s​ ​t​e​s​t​i​n​g​ ​o​n​l​y​.​ ​T​h​e​ ​k​e​y​ ​s​t​a​y​s​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​.​ ​C​r​e​a​t​e​ ​C​h​e​c​k​o​u​t​ ​S​e​s​s​i​o​n​s​ ​o​n​ ​y​o​u​r​ ​b​a​c​k​e​n​d​ ​i​n​ ​p​r​o​d​u​c​t​i​o​n​.
+		 */
+		apiKeyHint: string
+		/**
+		 * M​e​r​c​h​a​n​t​ ​o​r​d​e​r​ ​I​D
+		 */
+		merchantOrderId: string
+		/**
+		 * A​m​o​u​n​t
+		 */
+		amount: string
+		/**
+		 * C​h​a​i​n​s​ ​a​n​d​ ​a​s​s​e​t​s​ ​(​m​u​l​t​i​-​s​e​l​e​c​t​)
+		 */
+		chainAsset: string
+		/**
+		 * S​e​l​e​c​t​ ​o​n​e​ ​o​r​ ​m​o​r​e​ ​c​h​a​i​n​s​…
+		 */
+		chainPlaceholder: string
+		/**
+		 * A​m​o​u​n​t​ ​m​o​d​e
+		 */
+		amountMode: string
+		/**
+		 * E​X​A​C​T
+		 */
+		amountModeExact: string
+		/**
+		 * A​U​T​O
+		 */
+		amountModeAuto: string
+		/**
+		 * C​h​e​c​k​o​u​t​ ​t​i​t​l​e
+		 */
+		title: string
+		/**
+		 * C​h​e​c​k​o​u​t​ ​d​e​s​c​r​i​p​t​i​o​n
+		 */
+		description: string
+		/**
+		 * S​u​c​c​e​s​s​ ​U​R​L
+		 */
+		successUrl: string
+		/**
+		 * C​a​n​c​e​l​ ​U​R​L
+		 */
+		cancelUrl: string
+		/**
+		 * O​r​d​e​r​ ​m​e​t​a​d​a​t​a
+		 */
+		metadata: string
+		/**
+		 * A​u​t​o​-​i​m​p​o​r​t​ ​s​a​n​d​b​o​x​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s
+		 */
+		autoImport: string
+		/**
+		 * W​h​e​n​ ​o​n​,​ ​a​ ​d​e​t​e​r​m​i​n​i​s​t​i​c​ ​b​u​r​n​e​r​ ​s​a​n​d​b​o​x​ ​a​d​d​r​e​s​s​ ​i​s​ ​i​m​p​o​r​t​e​d​ ​f​o​r​ ​t​h​i​s​ ​o​r​d​e​r​ ​b​e​f​o​r​e​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​i​s​ ​c​r​e​a​t​e​d​.​ ​U​s​e​f​u​l​ ​w​h​e​n​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​a​d​d​r​e​s​s​e​s​ ​y​e​t​.​ ​T​u​r​n​ ​i​t​ ​o​f​f​ ​t​o​ ​u​s​e​ ​o​n​l​y​ ​t​h​e​ ​a​d​d​r​e​s​s​e​s​ ​y​o​u​ ​m​a​n​a​g​e​ ​y​o​u​r​s​e​l​f​.
+		 */
+		autoImportHint: string
+		/**
+		 * t​i​p​:​ ​i​f​ ​t​h​i​s​ ​f​a​i​l​e​d​ ​b​e​c​a​u​s​e​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​,​ ​e​n​a​b​l​e​ ​A​u​t​o​-​i​m​p​o​r​t​ ​a​b​o​v​e​ ​o​r​ ​c​r​e​a​t​e​ ​o​n​e​ ​i​n​ ​D​a​s​h​b​o​a​r​d​ ​→​ ​A​d​d​r​e​s​s​e​s​.
+		 */
+		noAddressHint: string
+		/**
+		 * T​R​O​N​ ​a​n​d​ ​S​o​l​a​n​a​ ​a​r​e​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​p​a​i​d​ ​p​l​a​n​s​.​ ​P​l​e​a​s​e​ ​s​e​l​e​c​t​ ​E​V​M​ ​c​h​a​i​n​s​.
+		 */
+		droppedNonEvmOnly: string
+		/**
+		 * T​h​e​ ​f​o​l​l​o​w​i​n​g​ ​c​h​a​i​n​s​ ​a​r​e​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​p​a​i​d​ ​p​l​a​n​s​.​ ​P​l​e​a​s​e​ ​d​e​s​e​l​e​c​t​:​ ​{​c​h​a​i​n​s​}
+		 * @param {unknown} chains
+		 */
+		droppedNonEvmMix: RequiredParams<'chains'>
+		/**
+		 * E​n​a​b​l​e​ ​A​u​t​o​-​i​m​p​o​r​t​ ​o​r​ ​c​o​n​f​i​g​u​r​e​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​e​s​ ​i​n​ ​t​h​e​ ​D​a​s​h​b​o​a​r​d​.
+		 */
+		droppedFallback: string
+		/**
+		 * C​r​e​a​t​e​ ​a​n​d​ ​o​p​e​n​ ​C​h​e​c​k​o​u​t
+		 */
+		create: string
+		/**
+		 * N​e​w​ ​m​e​r​c​h​a​n​t​ ​o​r​d​e​r​ ​I​D
+		 */
+		newOrderId: string
+		/**
+		 * E​n​t​e​r​ ​a​ ​s​a​n​d​b​o​x​ ​A​P​I​ ​k​e​y​,​ ​m​e​r​c​h​a​n​t​ ​o​r​d​e​r​ ​I​D​,​ ​a​n​d​ ​a​m​o​u​n​t​.
+		 */
+		missingRequired: string
+		/**
+		 * S​e​l​e​c​t​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​c​h​a​i​n​.
+		 */
+		missingChain: string
+		/**
+		 * m​e​t​a​d​a​t​a​ ​m​u​s​t​ ​b​e​ ​a​ ​J​S​O​N​ ​o​b​j​e​c​t
+		 */
+		metadataObjectError: string
+		/**
+		 * c​h​e​c​k​o​u​t​ ​s​e​s​s​i​o​n​ ​r​e​s​p​o​n​s​e​ ​i​s​ ​m​i​s​s​i​n​g​ ​c​l​i​e​n​t​_​s​e​c​r​e​t
+		 */
+		responseMissingSecret: string
+		/**
+		 * u​n​k​n​o​w​n​ ​e​r​r​o​r
+		 */
+		unknownError: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -410,11 +525,11 @@ export type TranslationFunctions = {
 		 */
 		createOrder: () => LocalizedString
 		/**
-		 * Open wallet…
+		 * Open browser wallet…
 		 */
 		paying: () => LocalizedString
 		/**
-		 * 2. Pay with wallet
+		 * 2. Browser wallet
 		 */
 		pay: () => LocalizedString
 		/**
@@ -544,7 +659,7 @@ export type TranslationFunctions = {
 		 */
 		placeholder: () => LocalizedString
 		/**
-		 * Use a sandbox key. It stays in your browser and is sent directly to the API.
+		 * Use a sandbox key. It stays in your browser and is sent directly to the API. In production, call the API from your backend, not the browser.
 		 */
 		hint: () => LocalizedString
 	}
@@ -712,6 +827,120 @@ export type TranslationFunctions = {
 	 * This playground calls <code>@stableops/api-sdk</code> directly from your browser with the API key you provide. Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I've sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.
 	 */
 	footer: () => LocalizedString
+	checkout: {
+		/**
+		 * API Key
+		 */
+		apiKey: () => LocalizedString
+		/**
+		 * Paste your sandbox API key (sk_sandbox_…)
+		 */
+		apiKeyPlaceholder: () => LocalizedString
+		/**
+		 * For docs testing only. The key stays in this browser. Create Checkout Sessions on your backend in production.
+		 */
+		apiKeyHint: () => LocalizedString
+		/**
+		 * Merchant order ID
+		 */
+		merchantOrderId: () => LocalizedString
+		/**
+		 * Amount
+		 */
+		amount: () => LocalizedString
+		/**
+		 * Chains and assets (multi-select)
+		 */
+		chainAsset: () => LocalizedString
+		/**
+		 * Select one or more chains…
+		 */
+		chainPlaceholder: () => LocalizedString
+		/**
+		 * Amount mode
+		 */
+		amountMode: () => LocalizedString
+		/**
+		 * EXACT
+		 */
+		amountModeExact: () => LocalizedString
+		/**
+		 * AUTO
+		 */
+		amountModeAuto: () => LocalizedString
+		/**
+		 * Checkout title
+		 */
+		title: () => LocalizedString
+		/**
+		 * Checkout description
+		 */
+		description: () => LocalizedString
+		/**
+		 * Success URL
+		 */
+		successUrl: () => LocalizedString
+		/**
+		 * Cancel URL
+		 */
+		cancelUrl: () => LocalizedString
+		/**
+		 * Order metadata
+		 */
+		metadata: () => LocalizedString
+		/**
+		 * Auto-import sandbox receiving address
+		 */
+		autoImport: () => LocalizedString
+		/**
+		 * When on, a deterministic burner sandbox address is imported for this order before the session is created. Useful when your org has no addresses yet. Turn it off to use only the addresses you manage yourself.
+		 */
+		autoImportHint: () => LocalizedString
+		/**
+		 * tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.
+		 */
+		noAddressHint: () => LocalizedString
+		/**
+		 * TRON and Solana are only available on paid plans. Please select EVM chains.
+		 */
+		droppedNonEvmOnly: () => LocalizedString
+		/**
+		 * The following chains are only available on paid plans. Please deselect: {chains}
+		 */
+		droppedNonEvmMix: (arg: { chains: unknown }) => LocalizedString
+		/**
+		 * Enable Auto-import or configure receiving addresses in the Dashboard.
+		 */
+		droppedFallback: () => LocalizedString
+		/**
+		 * Create and open Checkout
+		 */
+		create: () => LocalizedString
+		/**
+		 * New merchant order ID
+		 */
+		newOrderId: () => LocalizedString
+		/**
+		 * Enter a sandbox API key, merchant order ID, and amount.
+		 */
+		missingRequired: () => LocalizedString
+		/**
+		 * Select at least one chain.
+		 */
+		missingChain: () => LocalizedString
+		/**
+		 * metadata must be a JSON object
+		 */
+		metadataObjectError: () => LocalizedString
+		/**
+		 * checkout session response is missing client_secret
+		 */
+		responseMissingSecret: () => LocalizedString
+		/**
+		 * unknown error
+		 */
+		unknownError: () => LocalizedString
+	}
 }
 
 export type Formatters = {}

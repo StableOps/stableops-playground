@@ -11,8 +11,8 @@ const en = {
   actions: {
     creating: 'Creating…',
     createOrder: '1. Create order',
-    paying: 'Open wallet…',
-    pay: '2. Pay with wallet',
+    paying: 'Open browser wallet…',
+    pay: '2. Browser wallet',
     confirmManual: '2. I\'ve sent it manually',
     polling: 'Polling…',
     waitDetected: '3. Wait detected',
@@ -50,7 +50,7 @@ const en = {
   apiKey: {
     label: 'API Key',
     placeholder: 'Paste your sandbox API key (sk_sandbox_…)',
-    hint: 'Use a sandbox key. It stays in your browser and is sent directly to the API.',
+    hint: 'Use a sandbox key. It stays in your browser and is sent directly to the API. In production, call the API from your backend, not the browser.',
   },
   amountMode: {
     label: 'Amount mode',
@@ -106,6 +106,36 @@ const en = {
   },
   footer:
     'This playground calls <code>@stableops/api-sdk</code> directly from your browser with the API key you provide. Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I\'ve sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.',
+  checkout: {
+    apiKey: 'API Key',
+    apiKeyPlaceholder: 'Paste your sandbox API key (sk_sandbox_…)',
+    apiKeyHint: 'For docs testing only. The key stays in this browser. Create Checkout Sessions on your backend in production.',
+    merchantOrderId: 'Merchant order ID',
+    amount: 'Amount',
+    chainAsset: 'Chains and assets (multi-select)',
+    chainPlaceholder: 'Select one or more chains…',
+    amountMode: 'Amount mode',
+    amountModeExact: 'EXACT',
+    amountModeAuto: 'AUTO',
+    title: 'Checkout title',
+    description: 'Checkout description',
+    successUrl: 'Success URL',
+    cancelUrl: 'Cancel URL',
+    metadata: 'Order metadata',
+    autoImport: 'Auto-import sandbox receiving address',
+    autoImportHint: 'When on, a deterministic burner sandbox address is imported for this order before the session is created. Useful when your org has no addresses yet. Turn it off to use only the addresses you manage yourself.',
+    noAddressHint: 'tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.',
+    droppedNonEvmOnly: 'TRON and Solana are only available on paid plans. Please select EVM chains.',
+    droppedNonEvmMix: 'The following chains are only available on paid plans. Please deselect: {chains}',
+    droppedFallback: 'Enable Auto-import or configure receiving addresses in the Dashboard.',
+    create: 'Create and open Checkout',
+    newOrderId: 'New merchant order ID',
+    missingRequired: 'Enter a sandbox API key, merchant order ID, and amount.',
+    missingChain: 'Select at least one chain.',
+    metadataObjectError: 'metadata must be a JSON object',
+    responseMissingSecret: 'checkout session response is missing client_secret',
+    unknownError: 'unknown error',
+  },
 } satisfies BaseTranslation
 
 export default en

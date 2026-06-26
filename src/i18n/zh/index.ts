@@ -11,8 +11,8 @@ const zh = {
   actions: {
     creating: '创建中…',
     createOrder: '1. 创建支付单',
-    paying: '打开钱包…',
-    pay: '2. 用钱包支付',
+    paying: '打开浏览器钱包…',
+    pay: '2. 浏览器钱包',
     confirmManual: '2. 我已手动转账',
     polling: '轮询中…',
     waitDetected: '3. 等待 detected',
@@ -49,7 +49,7 @@ const zh = {
   apiKey: {
     label: 'API Key',
     placeholder: '粘贴你的 sandbox API key（sk_sandbox_…）',
-    hint: '请使用 sandbox key；它只保存在你的浏览器并直接发送给 API。',
+    hint: '请使用 sandbox key；它只保存在你的浏览器并直接发送给 API。生产环境请在服务端调用 API，不要在浏览器中调用。',
   },
   amountMode: {
     label: '金额模式',
@@ -105,6 +105,36 @@ const zh = {
   },
   footer:
     '本 playground 直接在浏览器里用你提供的 API Key 调 <code>@stableops/api-sdk</code>；第 2 步调用 <code>@stableops/wallet-sdk</code> 让浏览器钱包发送真实测试网交易；也可以不走钱包，从任意钱包/交易所向显示的地址转账后点击「我已手动转账」。订单进入 detected / confirmed / finalized 依赖 scanner 与 confirmations watcher。在 sandbox 下，若你的 org 还没有收款地址，会自动为本订单创建一个随机地址。请仅使用 sandbox key，切勿在浏览器中粘贴生产 key。<a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">在 GitLab 查看源码</a>。',
+  checkout: {
+    apiKey: 'API Key',
+    apiKeyPlaceholder: '粘贴你的 sandbox API key（sk_sandbox_…）',
+    apiKeyHint: '仅用于文档测试，密钥只保存在当前浏览器。生产环境请在后端创建收银台会话。',
+    merchantOrderId: '商户订单号',
+    amount: '金额',
+    chainAsset: '链与资产（可多选）',
+    chainPlaceholder: '选择一条或多条链…',
+    amountMode: '金额模式',
+    amountModeExact: 'EXACT',
+    amountModeAuto: 'AUTO',
+    title: '收银台标题',
+    description: '收银台描述',
+    successUrl: '成功返回地址',
+    cancelUrl: '取消返回地址',
+    metadata: '订单元数据',
+    autoImport: '自动导入 sandbox 收款地址',
+    autoImportHint: '开启时会在创建会话前为本订单导入一个确定性 burner 地址，适合 org 还没有任何收款地址的场景。若只想使用自己管理的地址，请关闭。',
+    noAddressHint: '提示：如果创建失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
+    droppedNonEvmOnly: 'TRON 和 Solana 只有付费套餐才可用，请选择 EVM 链。',
+    droppedNonEvmMix: '以下链仅付费套餐可用，请取消选择：{chains}',
+    droppedFallback: '请开启「自动导入」或前往控制台配置收款地址。',
+    create: '创建并打开收银台',
+    newOrderId: '换一个订单号',
+    missingRequired: '请填写沙箱 API Key、商户订单号和金额。',
+    missingChain: '请至少选择一条链。',
+    metadataObjectError: '订单元数据必须是 JSON 对象',
+    responseMissingSecret: '创建响应缺少 client_secret',
+    unknownError: '未知错误',
+  },
 } satisfies Translation
 
 export default zh
