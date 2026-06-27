@@ -33,6 +33,7 @@ export type WalletConnectDialogProps = {
   qrCode: string | null
   error: string | null
   onSelectWallet: (wallet: PlaygroundWallet) => void
+  walletLinkMode?: boolean
   onBack: () => void
   onClose: () => void
 }
@@ -53,6 +54,7 @@ export function WalletConnectDialog({
   qrCode,
   error,
   onSelectWallet,
+  walletLinkMode = false,
   onBack,
   onClose,
 }: WalletConnectDialogProps): ReactNode {
@@ -76,7 +78,12 @@ export function WalletConnectDialog({
     !selectedWallet?.links?.native && Boolean(selectedWallet?.links?.universal)
   const readyUri = state.status === 'uri_ready' ? state.uri : null
   const qrLoading = selectedWallet && !qrCode && state.status !== 'failed'
-  const walletHref = appLink && readyUri ? walletLink(appLink, readyUri) : undefined
+  const walletHref =
+    walletLinkMode && readyUri
+      ? readyUri
+      : appLink && readyUri
+        ? walletLink(appLink, readyUri)
+        : undefined
 
   return (
     <div
@@ -209,12 +216,12 @@ export function WalletConnectDialog({
             </div>
 
             <p className="mt-5 text-center text-sm font-medium text-foreground">
-              {selectedWallet.links
+              {walletLinkMode || selectedWallet.links
                 ? labels.scanWithWallet({ wallet: selectedWallet.name })
                 : labels.scanAnyWallet()}
             </p>
 
-            {appLink ? (
+            {walletLinkMode || appLink ? (
               <div className="my-4 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border" />
                 <span className="text-xs text-muted-foreground">{labels.or()}</span>
@@ -224,7 +231,7 @@ export function WalletConnectDialog({
               <div className="h-4" />
             )}
             <div className="flex gap-2">
-              {appLink ? (
+              {walletLinkMode || appLink ? (
                 <a
                   className={`flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors ${
                     walletHref
@@ -233,7 +240,7 @@ export function WalletConnectDialog({
                   }`}
                   aria-disabled={walletHref ? false : true}
                   href={walletHref}
-                  {...(appLinkIsUniversal && walletHref
+                  {...((walletLinkMode || appLinkIsUniversal) && walletHref
                     ? { target: '_blank', rel: 'noreferrer' }
                     : {})}>
                   {labels.openWallet({ wallet: selectedWallet.name })}
@@ -241,12 +248,12 @@ export function WalletConnectDialog({
               ) : null}
               <button
                 type="button"
-                disabled={!qrCode || state.status !== 'uri_ready'}
+                disabled={!readyUri}
                 onClick={() => {
                   if (readyUri) void onCopyUri(readyUri)
                 }}
                 className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background">
-                  {copied ? (
+                {copied ? (
                   <>
                     <svg
                       viewBox="0 0 24 24"
@@ -275,7 +282,7 @@ export function WalletConnectDialog({
                 key={wallet.id}
                 type="button"
                 className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-transparent px-2 py-4 text-center transition-colors hover:border-[#14B8A6]/40 hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!projectId || !available}
+                disabled={(!walletLinkMode && !projectId) || !available}
                 onClick={() => onSelectWallet(wallet)}>
                 <WalletIcon wallet={wallet} />
                 <span className="w-full truncate text-xs font-medium">{wallet.name}</span>

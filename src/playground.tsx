@@ -12,13 +12,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button, cn, Input, Label, MultiSelect } from './ui'
 import { CopyButton, StatusBadge, type Step } from './ui-bits'
-import { WALLETCONNECT_WALLETS, type PlaygroundWallet } from './wallets'
+import { TRON_APP_WALLETS, WALLETCONNECT_WALLETS, type PlaygroundWallet } from './wallets'
 import { WalletConnectDialog } from './walletconnect-dialog'
 import {
   DEFAULT_BASE_URL,
+  buildTronWalletAppUrl,
+  buildTronWalletHandoffUrl,
   chainLabel,
+  filterWalletConnectWallets,
+  filterWalletLinkWallets,
+  getPaymentCandidateChains,
   getUnauthorizedWalletConnectChains,
   getWalletConnectChainSelection,
+  parseTronWalletHandoff,
 } from './helpers'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 import { usePlaygroundState } from './use-playground-state'
@@ -116,10 +122,10 @@ export function Playground({
   const [selectedWalletConnectId, setSelectedWalletConnectId] = useState<string | null>(null)
   // 用户在二维码页点「返回」会主动断开在途连接，使 connect() reject；据此抑制由此产生的误报错误。
   const walletConnectCancelling = useRef(false)
-  const selectedWalletConnect = useMemo(
-    () => WALLETCONNECT_WALLETS.find((wallet) => wallet.id === selectedWalletConnectId) ?? null,
-    [selectedWalletConnectId],
-  )
+  const initialOrder = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    return parseTronWalletHandoff(window.location.href)
+  }, [])
 
   // 选中的测试网（按选择顺序）；为空时回落到目录首项，避免 Math.max(...[]) / 取 asset 出错。
   const selectedOptions: PlaygroundTestnet[] = useMemo(() => {
@@ -155,6 +161,7 @@ export function Playground({
   } = usePlaygroundState({
     client,
     LL,
+    initialOrder,
     selectedOptions,
     trimmedKey,
     baseUrl,
@@ -169,6 +176,10 @@ export function Playground({
     if (!order) return []
     return Array.from(new Set(order.paymentInstructions.map((pi) => pi.chain)))
   }, [order])
+  const mobileWalletCandidateChains = useMemo(
+    () => getPaymentCandidateChains(payChainOptions, selectedPayChain),
+    [payChainOptions, selectedPayChain],
+  )
 
   // 订单变化时，若当前支付网络选择不在新订单的可用链中，回退自动。
   useEffect(() => {
@@ -179,11 +190,24 @@ export function Playground({
 
   const walletConnectChainSelection = useMemo(() => {
     if (!order) return { evmChains: [], solanaChains: [], supportedChains: [] }
-    return getWalletConnectChainSelection(
-      Array.from(new Set(order.paymentInstructions.map((instruction) => instruction.chain))),
-    )
-  }, [order])
+    return getWalletConnectChainSelection(mobileWalletCandidateChains)
+  }, [mobileWalletCandidateChains, order])
   const walletConnectAvailable = walletConnectChainSelection.supportedChains.length > 0
+  const walletConnectWallets = useMemo(
+    () => filterWalletConnectWallets(WALLETCONNECT_WALLETS, walletConnectChainSelection.supportedChains),
+    [walletConnectChainSelection.supportedChains],
+  )
+  const walletLinkWallets = useMemo(() => {
+    if (!order) return []
+    return filterWalletLinkWallets(TRON_APP_WALLETS, mobileWalletCandidateChains)
+  }, [mobileWalletCandidateChains, order])
+  const walletLinkMode = !walletConnectAvailable && walletLinkWallets.length > 0
+  const mobileWalletAvailable = walletConnectAvailable || walletLinkMode
+  const mobileWallets = walletLinkMode ? walletLinkWallets : walletConnectWallets
+  const selectedWalletConnect = useMemo(
+    () => mobileWallets.find((wallet) => wallet.id === selectedWalletConnectId) ?? null,
+    [selectedWalletConnectId, mobileWallets],
+  )
   // 链集合签名，作为 controller 生命周期的稳定 key，避免 useEffect 依赖整数组每次 render 都变。
   const walletConnectChainsKey = useMemo(
     () => walletConnectChainSelection.supportedChains.slice().sort().join(','),
@@ -217,12 +241,12 @@ export function Playground({
     const controller = walletConnectController
     setWalletConnectController(null)
     setWalletConnectHidden(false)
-    setWalletConnectState({ status: 'idle', wallets: WALLETCONNECT_WALLETS })
+    setWalletConnectState({ status: 'idle', wallets: walletConnectWallets })
     setWalletConnectQrCode(null)
     setWalletConnectError(null)
     setSelectedWalletConnectId(null)
     if (controller) await controller.disconnect().catch(() => undefined)
-  }, [walletConnectController])
+  }, [walletConnectController, walletConnectWallets])
 
   const openWalletConnect = useCallback(() => {
     setWalletConnectOpen(true)
@@ -249,6 +273,7 @@ export function Playground({
   // 触发 "No matching key. proposal/topic" 噪音日志。
   useEffect(() => {
     if (!walletConnectOpen) return
+    if (walletLinkMode) return
     if (!walletConnectProjectId || walletConnectChainSelection.supportedChains.length === 0) return
     let cancelled = false
     let createdController: WalletConnectController | null = null
@@ -265,7 +290,7 @@ export function Playground({
           },
           chains: walletConnectChainSelection.evmChains,
           solanaChains: walletConnectChainSelection.solanaChains,
-          wallets: WALLETCONNECT_WALLETS,
+          wallets: walletConnectWallets,
         })
         if (cancelled) {
           await controller.disconnect().catch(() => undefined)
@@ -288,14 +313,50 @@ export function Playground({
         void createdController.disconnect().catch(() => undefined)
       }
       setWalletConnectController(null)
-      setWalletConnectState({ status: 'idle', wallets: WALLETCONNECT_WALLETS })
+      setWalletConnectState({ status: 'idle', wallets: walletConnectWallets })
       setWalletConnectQrCode(null)
     }
     // walletConnectChainsKey 用链集合签名做稳定依赖；按链集合变化重建即可。
-  }, [walletConnectOpen, walletConnectProjectId, walletConnectChainSelection, walletConnectChainsKey])
+  }, [
+    walletConnectOpen,
+    walletLinkMode,
+    walletConnectProjectId,
+    walletConnectChainSelection,
+    walletConnectChainsKey,
+    walletConnectWallets,
+  ])
+
+  const openWalletApp = useCallback(async (wallet: PlaygroundWallet) => {
+    if (typeof window === 'undefined') return
+    if (!order) return
+    const handoffUrl = buildTronWalletHandoffUrl(window.location.href, order)
+    const url = buildTronWalletAppUrl(wallet.id, handoffUrl)
+    if (!url) {
+      setWalletConnectError(`unsupported wallet app link: ${wallet.name}`)
+      return
+    }
+    setWalletConnectError(null)
+    setSelectedWalletConnectId(wallet.id)
+    setWalletConnectState({ status: 'uri_ready', wallets: mobileWallets, selectedWallet: wallet, uri: url })
+    setWalletConnectQrCode(null)
+    try {
+      const dataUrl = await QRCode.toDataURL(url, {
+        errorCorrectionLevel: 'H',
+        margin: 2,
+        width: 320,
+      })
+      setWalletConnectQrCode(dataUrl)
+    } catch (err) {
+      setWalletConnectError(err instanceof Error ? err.message : String(err))
+    }
+  }, [mobileWallets, order])
 
   const connectWalletConnect = useCallback(
     async (wallet: PlaygroundWallet) => {
+      if (walletLinkMode) {
+        void openWalletApp(wallet)
+        return
+      }
       if (
         !order ||
         walletConnectChainSelection.supportedChains.length === 0 ||
@@ -336,9 +397,11 @@ export function Playground({
       chainOptions,
       LL,
       order,
+      openWalletApp,
       payWithWallet,
       selectedPayChain,
       walletConnectChainSelection,
+      walletLinkMode,
       walletConnectProjectId,
       walletConnectController,
     ],
@@ -459,8 +522,8 @@ export function Playground({
               busy === 'create' ||
               busy === 'pay' ||
               steps[1].status === 'done' ||
-              !walletConnectProjectId ||
-              !walletConnectAvailable
+              (!walletLinkMode && !walletConnectProjectId) ||
+              !mobileWalletAvailable
             }>
             {LL.walletConnect.button()}
           </Button>
@@ -509,12 +572,13 @@ export function Playground({
         labels={LL.walletConnect}
         copiedLabel={LL.manual.copied()}
         projectId={walletConnectProjectId}
-        available={walletConnectAvailable}
-        wallets={WALLETCONNECT_WALLETS}
+        available={mobileWalletAvailable}
+        wallets={mobileWallets}
         selectedWallet={selectedWalletConnect}
         state={walletConnectState}
         qrCode={walletConnectQrCode}
         error={walletConnectError}
+        walletLinkMode={walletLinkMode}
         onSelectWallet={(wallet) => void connectWalletConnect(wallet)}
         onBack={() => void backToWalletList()}
         onClose={() => {

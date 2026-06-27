@@ -30,6 +30,7 @@ import { createConfirmationProgressGuard } from './wallet-confirmation-guard'
 export type UsePlaygroundStateInput = {
   client: StableOps | null
   LL: TranslationFunctions
+  initialOrder?: PaymentOrder | null
   selectedOptions: PlaygroundTestnet[]
   trimmedKey: string
   baseUrl: string
@@ -67,6 +68,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
   const {
     client,
     LL,
+    initialOrder,
     selectedOptions,
     trimmedKey,
     baseUrl,
@@ -76,8 +78,20 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     initialSteps,
   } = input
 
-  const [order, setOrder] = useState<PaymentOrder | null>(null)
-  const [steps, setSteps] = useState<Step[]>(initialSteps)
+  const [order, setOrder] = useState<PaymentOrder | null>(initialOrder ?? null)
+  const [steps, setSteps] = useState<Step[]>(() => {
+    if (!initialOrder) return initialSteps
+    const primary = initialOrder.paymentInstructions[0]
+    return initialSteps.map((step, index) =>
+      index === 0
+        ? {
+            ...step,
+            status: 'done',
+            detail: `${initialOrder.id}  →  ${primary?.address ?? '(no address)'}`,
+          }
+        : step,
+    )
+  })
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState<null | string>(null)
 

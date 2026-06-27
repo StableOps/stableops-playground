@@ -23,7 +23,6 @@ const zh = {
   walletConnect: {
     button: '2. 手机钱包',
     heading: '用手机钱包支付',
-    hint: '选择钱包，扫码或打开 App 即可支付。',
     missingProjectId: '未提供 Reown projectId，手机钱包支付已禁用。',
     noEvm: '手机钱包支付仅支持 EVM 支付指令。',
     close: '关闭',
@@ -125,8 +124,10 @@ const zh = {
     cancelUrl: '取消返回地址',
     metadata: '订单元数据',
     autoImport: '自动导入 sandbox 收款地址',
-    autoImportHint: '开启时会在创建会话前为本订单导入一个确定性 burner 地址，适合 org 还没有任何收款地址的场景。若只想使用自己管理的地址，请关闭。',
-    noAddressHint: '提示：如果创建失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
+    autoImportHint:
+      '开启时会在创建会话前为本订单导入一个确定性 burner 地址，适合 org 还没有任何收款地址的场景。若只想使用自己管理的地址，请关闭。',
+    noAddressHint:
+      '提示：如果创建失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
     droppedNonEvmOnly: 'TRON 和 Solana 只有付费套餐才可用，请选择 EVM 链。',
     droppedNonEvmMix: '以下链仅付费套餐可用，请取消选择：{chains}',
     droppedFallback: '请开启「自动导入」或前往控制台配置收款地址。',

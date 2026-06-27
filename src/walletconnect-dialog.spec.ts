@@ -24,6 +24,21 @@ describe('WalletConnectDialog responsive modal classes', () => {
     expect(source).toContain("state.status === 'uri_ready' ? state.uri : null")
     expect(source).toContain('pointer-events-none cursor-not-allowed opacity-50')
     expect(source).toContain('aria-disabled={walletHref ? false : true}')
-    expect(source).toContain('disabled={!qrCode || state.status !==')
+    expect(source).toContain('disabled={!readyUri}')
+  })
+
+  it('uses the QR page for direct wallet app links too', () => {
+    const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
+
+    expect(source).toContain('walletLinkMode && readyUri')
+    expect(source).toContain('? readyUri')
+    expect(source).toContain("state.status === 'uri_ready'")
+    expect(source).toContain('disabled={!readyUri}')
+  })
+
+  it('does not render explanatory hint text in the wallet picker', () => {
+    const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
+
+    expect(source).not.toContain('labels.hint()')
   })
 })

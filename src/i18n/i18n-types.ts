@@ -88,10 +88,6 @@ type RootTranslation = {
 		 */
 		heading: string
 		/**
-		 * P​i​c​k​ ​y​o​u​r​ ​w​a​l​l​e​t​,​ ​t​h​e​n​ ​s​c​a​n​ ​t​h​e​ ​Q​R​ ​c​o​d​e​ ​o​r​ ​o​p​e​n​ ​t​h​e​ ​a​p​p​ ​t​o​ ​p​a​y​.
-		 */
-		hint: string
-		/**
 		 * M​o​b​i​l​e​ ​w​a​l​l​e​t​ ​p​a​y​ ​i​s​ ​d​i​s​a​b​l​e​d​ ​b​e​c​a​u​s​e​ ​n​o​ ​R​e​o​w​n​ ​p​r​o​j​e​c​t​I​d​ ​w​a​s​ ​p​r​o​v​i​d​e​d​.
 		 */
 		missingProjectId: string
@@ -572,10 +568,6 @@ export type TranslationFunctions = {
 		 * Pay with a mobile wallet
 		 */
 		heading: () => LocalizedString
-		/**
-		 * Pick your wallet, then scan the QR code or open the app to pay.
-		 */
-		hint: () => LocalizedString
 		/**
 		 * Mobile wallet pay is disabled because no Reown projectId was provided.
 		 */

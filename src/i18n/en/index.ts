@@ -13,7 +13,7 @@ const en = {
     createOrder: '1. Create order',
     paying: 'Open browser wallet…',
     pay: '2. Browser wallet',
-    confirmManual: '2. I\'ve sent it manually',
+    confirmManual: "2. I've sent it manually",
     polling: 'Polling…',
     waitDetected: '3. Wait detected',
     waitConfirmed: '4. Wait confirmed',
@@ -23,7 +23,6 @@ const en = {
   walletConnect: {
     button: '2. Mobile wallet',
     heading: 'Pay with a mobile wallet',
-    hint: 'Pick your wallet, then scan the QR code or open the app to pay.',
     missingProjectId: 'Mobile wallet pay is disabled because no Reown projectId was provided.',
     noEvm: 'Mobile wallet pay is only available for EVM payment instructions.',
     close: 'Close',
@@ -74,7 +73,8 @@ const en = {
     placeholder: 'Select chains…',
   },
   faucet: {
-    prefix: 'Real wallet transaction on the selected testnet(s) — do not use mainnet funds. Get test funds: ',
+    prefix:
+      'Real wallet transaction on the selected testnet(s) — do not use mainnet funds. Get test funds: ',
   },
   dropped: {
     nonEvmOnly: 'TRON and Solana are only available on paid plans. Please select EVM chains.',
@@ -112,7 +112,8 @@ const en = {
   checkout: {
     apiKey: 'API Key',
     apiKeyPlaceholder: 'Paste your sandbox API key (sk_sandbox_…)',
-    apiKeyHint: 'For docs testing only. The key stays in this browser. Create Checkout Sessions on your backend in production.',
+    apiKeyHint:
+      'For docs testing only. The key stays in this browser. Create Checkout Sessions on your backend in production.',
     merchantOrderId: 'Merchant order ID',
     amount: 'Amount',
     chainAsset: 'Chains and assets (multi-select)',
@@ -126,10 +127,14 @@ const en = {
     cancelUrl: 'Cancel URL',
     metadata: 'Order metadata',
     autoImport: 'Auto-import sandbox receiving address',
-    autoImportHint: 'When on, a deterministic burner sandbox address is imported for this order before the session is created. Useful when your org has no addresses yet. Turn it off to use only the addresses you manage yourself.',
-    noAddressHint: 'tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.',
-    droppedNonEvmOnly: 'TRON and Solana are only available on paid plans. Please select EVM chains.',
-    droppedNonEvmMix: 'The following chains are only available on paid plans. Please deselect: {chains}',
+    autoImportHint:
+      'When on, a deterministic burner sandbox address is imported for this order before the session is created. Useful when your org has no addresses yet. Turn it off to use only the addresses you manage yourself.',
+    noAddressHint:
+      'tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.',
+    droppedNonEvmOnly:
+      'TRON and Solana are only available on paid plans. Please select EVM chains.',
+    droppedNonEvmMix:
+      'The following chains are only available on paid plans. Please deselect: {chains}',
     droppedFallback: 'Enable Auto-import or configure receiving addresses in the Dashboard.',
     create: 'Create and open Checkout',
     newOrderId: 'New merchant order ID',
