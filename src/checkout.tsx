@@ -6,6 +6,7 @@ import { StableOps } from '@stableops/api-sdk'
 import { Button, Input, Label, MultiSelect, Textarea, cn } from './ui'
 import { Spinner } from './ui-bits'
 import { importSandboxAddress } from './sandbox-address'
+import { buildCheckoutSessionInput } from './checkout-session-input'
 
 import { loadAllLocales } from './i18n/i18n-util.sync.js'
 import { i18nObject } from './i18n/i18n-util.js'
@@ -64,6 +65,7 @@ export type CheckoutProps = {
   locale?: 'en' | 'zh'
   baseUrl?: string
   checkoutUrl?: string
+  walletConnectProjectId?: string
   className?: string
 }
 
@@ -72,6 +74,7 @@ export function Checkout({
   locale: localeProp = 'en',
   baseUrl = 'https://api.stableops.dev',
   checkoutUrl = 'https://pay.stableops.dev',
+  walletConnectProjectId,
   className,
 }: CheckoutProps) {
   const locale: Locales = localeProp === 'zh' ? 'zh' : 'en'
@@ -151,7 +154,7 @@ export function Checkout({
         baseUrl,
       })
       const checkout = await stableops.checkoutSessions.create(
-        {
+        buildCheckoutSessionInput({
           merchantOrderId: trimmedMerchantOrderId,
           amount: amount.trim(),
           amountMode,
@@ -161,8 +164,9 @@ export function Checkout({
           description: description.trim() || undefined,
           successUrl: successUrl.trim() || undefined,
           cancelUrl: cancelUrl.trim() || undefined,
+          walletConnectProjectId,
           metadata: parseMetadata(metadata, copy.metadataObjectError()),
-        },
+        }),
         { idempotencyKey: trimmedMerchantOrderId },
       )
       if (!checkout.clientSecret) {
