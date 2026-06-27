@@ -1,7 +1,5 @@
 # StableOps Playground
 
-[![npm version](https://img.shields.io/npm/v/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![npm downloads](https://img.shields.io/npm/dm/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![License](https://img.shields.io/npm/l/@stableops/playground)](./LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org) [![Node](https://img.shields.io/badge/Node-%3E%3D18-339933)](https://nodejs.org)
-
 [中文文档](./README.zh-CN.md)
 
 `@stableops/playground` renders a self-contained `<Playground>` widget that walks
@@ -67,13 +65,13 @@ client component (a file with `"use client"`).
 
 ## Props
 
-| Prop                     | Type           | Default                     | Description                                                                               |
-| ------------------------ | -------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
-| `apiKey`                 | `string`       | —                           | Default API key. The widget also exposes an input so users can paste/override their own.  |
-| `baseUrl`                | `string`       | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS. |
+| Prop                     | Type           | Default                     | Description                                                                                         |
+| ------------------------ | -------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
+| `apiKey`                 | `string`       | —                           | Default API key. The widget also exposes an input so users can paste/override their own.            |
+| `baseUrl`                | `string`       | `https://api.stableops.dev` | StableOps API base URL. Must be reachable from the browser and allowed by the API's CORS.           |
 | `walletConnectProjectId` | `string`       | —                           | Reown projectId used by the WalletConnect QR flow. The WalletConnect button is disabled without it. |
-| `locale`                 | `'en' \| 'zh'` | `'en'`                      | UI language.                                                                              |
-| `className`              | `string`       | —                           | Extra classes for the root container.                                                     |
+| `locale`                 | `'en' \| 'zh'` | `'en'`                      | UI language.                                                                                        |
+| `className`              | `string`       | —                           | Extra classes for the root container.                                                               |
 
 The widget also exposes an **Auto-import sandbox receiving address** checkbox in
 its UI (on by default). When on, it imports a deterministic burner sandbox

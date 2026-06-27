@@ -1,7 +1,5 @@
 # StableOps Playground
 
-[![npm version](https://img.shields.io/npm/v/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![npm downloads](https://img.shields.io/npm/dm/@stableops/playground)](https://www.npmjs.com/package/@stableops/playground) [![License](https://img.shields.io/npm/l/@stableops/playground)](./LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org) [![Node](https://img.shields.io/badge/Node-%3E%3D18-339933)](https://nodejs.org)
-
 [English](./README.md)
 
 `@stableops/playground` 提供一个自包含的 `<Playground>` 组件，**直接在浏览器里**
@@ -59,13 +57,13 @@ export function Demo() {
 
 ## Props
 
-| Prop                     | 类型           | 默认值                      | 说明                                                            |
-| ------------------------ | -------------- | --------------------------- | --------------------------------------------------------------- |
-| `apiKey`                 | `string`       | —                           | 默认 API key。组件同时提供输入框，用户可粘贴/覆盖自己的 key。   |
-| `baseUrl`                | `string`       | `https://api.stableops.dev` | StableOps API base URL，需浏览器可达且在 API 的 CORS 白名单内。 |
+| Prop                     | 类型           | 默认值                      | 说明                                                                            |
+| ------------------------ | -------------- | --------------------------- | ------------------------------------------------------------------------------- |
+| `apiKey`                 | `string`       | —                           | 默认 API key。组件同时提供输入框，用户可粘贴/覆盖自己的 key。                   |
+| `baseUrl`                | `string`       | `https://api.stableops.dev` | StableOps API base URL，需浏览器可达且在 API 的 CORS 白名单内。                 |
 | `walletConnectProjectId` | `string`       | —                           | WalletConnect 二维码流程使用的 Reown projectId；未传时 WalletConnect 按钮禁用。 |
-| `locale`                 | `'en' \| 'zh'` | `'en'`                      | 界面语言。                                                      |
-| `className`              | `string`       | —                           | 根容器额外类名。                                                |
+| `locale`                 | `'en' \| 'zh'` | `'en'`                      | 界面语言。                                                                      |
+| `className`              | `string`       | —                           | 根容器额外类名。                                                                |
 
 组件 UI 内还提供一个 **「自动导入 sandbox 收款地址」** 勾选框（默认开启）：开启时
 会在建单前导入一个确定性 burner sandbox 地址。适合 org 还没任何地址的场景。关闭后
