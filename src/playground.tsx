@@ -4,7 +4,6 @@ import { StableOps, type ChainId } from '@stableops/api-sdk'
 import {
   createWalletConnectController,
   setWalletSdkDebug,
-  type EvmWalletChainId,
   type WalletConnectController,
   type WalletConnectControllerState,
 } from '@stableops/wallet-sdk'
@@ -19,7 +18,7 @@ import {
   DEFAULT_BASE_URL,
   chainLabel,
   getUnauthorizedWalletConnectChains,
-  isEvmChainId,
+  getWalletConnectChainSelection,
 } from './helpers'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 import { usePlaygroundState } from './use-playground-state'
@@ -178,23 +177,17 @@ export function Playground({
     }
   }, [order, payChainOptions, selectedPayChain])
 
-  const walletConnectChains = useMemo(() => {
-    if (!order) return []
-    return Array.from(
-      new Set(
-        order.paymentInstructions
-          .map((instruction) => instruction.chain)
-          .filter((chain): chain is EvmWalletChainId =>
-            isEvmChainId(chain as Parameters<typeof isEvmChainId>[0]),
-          ),
-      ),
+  const walletConnectChainSelection = useMemo(() => {
+    if (!order) return { evmChains: [], solanaChains: [], supportedChains: [] }
+    return getWalletConnectChainSelection(
+      Array.from(new Set(order.paymentInstructions.map((instruction) => instruction.chain))),
     )
   }, [order])
-  const walletConnectAvailable = walletConnectChains.length > 0
+  const walletConnectAvailable = walletConnectChainSelection.supportedChains.length > 0
   // 链集合签名，作为 controller 生命周期的稳定 key，避免 useEffect 依赖整数组每次 render 都变。
   const walletConnectChainsKey = useMemo(
-    () => walletConnectChains.slice().sort().join(','),
-    [walletConnectChains],
+    () => walletConnectChainSelection.supportedChains.slice().sort().join(','),
+    [walletConnectChainSelection.supportedChains],
   )
 
   useEffect(() => {
@@ -256,7 +249,7 @@ export function Playground({
   // 触发 "No matching key. proposal/topic" 噪音日志。
   useEffect(() => {
     if (!walletConnectOpen) return
-    if (!walletConnectProjectId || walletConnectChains.length === 0) return
+    if (!walletConnectProjectId || walletConnectChainSelection.supportedChains.length === 0) return
     let cancelled = false
     let createdController: WalletConnectController | null = null
     let unsubscribe: (() => void) | undefined
@@ -270,7 +263,8 @@ export function Playground({
             url: window.location.origin,
             icons: [`${window.location.origin}/logo.svg`],
           },
-          chains: walletConnectChains,
+          chains: walletConnectChainSelection.evmChains,
+          solanaChains: walletConnectChainSelection.solanaChains,
           wallets: WALLETCONNECT_WALLETS,
         })
         if (cancelled) {
@@ -297,12 +291,17 @@ export function Playground({
       setWalletConnectState({ status: 'idle', wallets: WALLETCONNECT_WALLETS })
       setWalletConnectQrCode(null)
     }
-    // walletConnectChains 用 key 做稳定依赖；按链集合签名重建即可。
-  }, [walletConnectOpen, walletConnectProjectId, walletConnectChains, walletConnectChainsKey])
+    // walletConnectChainsKey 用链集合签名做稳定依赖；按链集合变化重建即可。
+  }, [walletConnectOpen, walletConnectProjectId, walletConnectChainSelection, walletConnectChainsKey])
 
   const connectWalletConnect = useCallback(
     async (wallet: PlaygroundWallet) => {
-      if (!order || walletConnectChains.length === 0 || !walletConnectProjectId) return
+      if (
+        !order ||
+        walletConnectChainSelection.supportedChains.length === 0 ||
+        !walletConnectProjectId
+      )
+        return
       const controller = walletConnectController
       if (!controller) return
       setWalletConnectError(null)
@@ -310,10 +309,10 @@ export function Playground({
       try {
         await controller.connect({ walletId: wallet.id })
         const unauthorizedChains = getUnauthorizedWalletConnectChains(
-          walletConnectChains,
+          walletConnectChainSelection.supportedChains,
           controller.providers,
         )
-        if (unauthorizedChains.length === walletConnectChains.length) {
+        if (unauthorizedChains.length === walletConnectChainSelection.supportedChains.length) {
           setWalletConnectError(
             LL.walletConnect.chainNotAuthorized({
               chains: unauthorizedChains
@@ -339,7 +338,7 @@ export function Playground({
       order,
       payWithWallet,
       selectedPayChain,
-      walletConnectChains,
+      walletConnectChainSelection,
       walletConnectProjectId,
       walletConnectController,
     ],

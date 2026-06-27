@@ -33,7 +33,7 @@
 ## 安装
 
 ```bash
-pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/ethereum-provider react react-dom
+pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/universal-provider react react-dom
 ```
 
 ## 使用
@@ -78,8 +78,10 @@ export function Demo() {
    勾选「自动导入 sandbox 收款地址」（默认开启）时会先导入一个确定性 burner sandbox 地址，
    供订单分配。
 2. **链上支付**：`@stableops/wallet-sdk` 选出可支付指令并唤起浏览器钱包发送
-   ERC-20 / SPL / TRC-20 转账。对于 EVM 指令，WalletConnect 按钮会打开由
-   `createWalletConnectController()` 驱动的自定义钱包选择和二维码面板。
+   ERC-20 / SPL / TRC-20 转账。对于 EVM 和已支持的 Solana 指令，WalletConnect 按钮
+   会打开由 `createWalletConnectController()` 驱动的自定义钱包选择和二维码面板。
+   TRON WalletConnect 付款需先验证目标钱包的交易构造、签名和广播契约，当前仍使用
+   注入式 TronLink / TronWeb provider。
 3. **等待 confirmed / finalized**：轮询 `GET /v1/payment-orders/:id`，由 scanner 与
    confirmations watcher 推进订单。
 

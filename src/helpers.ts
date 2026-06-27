@@ -1,6 +1,7 @@
 import { StableOpsError } from '@stableops/api-sdk'
 import type { PaymentOrderInstruction } from '@stableops/api-sdk'
 import type {
+  ChainId,
   EvmWalletChainId,
   WalletPaymentInstruction,
   WalletProviderByChain,
@@ -55,10 +56,16 @@ export function mergeWalletProviders(
   return merged
 }
 
+export type WalletConnectChainSelection = {
+  evmChains: EvmWalletChainId[]
+  solanaChains: Array<'solana' | 'solana-devnet'>
+  supportedChains: ChainId[]
+}
+
 export function getUnauthorizedWalletConnectChains(
-  chains: readonly EvmWalletChainId[],
+  chains: readonly ChainId[],
   providers: WalletProviderByChain,
-): EvmWalletChainId[] {
+): ChainId[] {
   return chains.filter((chain) => !providers[chain])
 }
 
@@ -85,6 +92,32 @@ const PLAYGROUND_EVM_CHAINS = new Set<WalletPaymentInstruction['chain']>([
 
 export function isEvmChainId(chain: WalletPaymentInstruction['chain']): boolean {
   return PLAYGROUND_EVM_CHAINS.has(chain)
+}
+
+function isSolanaChainId(chain: WalletPaymentInstruction['chain']): chain is 'solana' | 'solana-devnet' {
+  return chain === 'solana' || chain === 'solana-devnet'
+}
+
+export function getWalletConnectChainSelection(
+  chains: readonly WalletPaymentInstruction['chain'][],
+): WalletConnectChainSelection {
+  const evmChains: EvmWalletChainId[] = []
+  const solanaChains: Array<'solana' | 'solana-devnet'> = []
+  const supportedChains: ChainId[] = []
+  for (const chain of chains) {
+    if (isEvmChainId(chain)) {
+      evmChains.push(chain as EvmWalletChainId)
+      supportedChains.push(chain)
+    } else if (isSolanaChainId(chain)) {
+      solanaChains.push(chain)
+      supportedChains.push(chain)
+    }
+  }
+  return {
+    evmChains,
+    solanaChains,
+    supportedChains,
+  }
 }
 
 // API 错误统一抽成一行：StableOpsError 带后端 message；其余回落到 Error.message / String。

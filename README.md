@@ -41,7 +41,7 @@ the StableOps API from the browser, so:
 ## Installation
 
 ```bash
-pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/ethereum-provider react react-dom
+pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/universal-provider react react-dom
 ```
 
 ## Usage
@@ -90,8 +90,11 @@ a hint pointing at the dashboard.
    allocate one.
 2. **Pay on-chain**: `@stableops/wallet-sdk` selects a payable instruction and
    asks the browser wallet to send the ERC-20 / SPL / TRC-20 transfer. For EVM
-   instructions, the WalletConnect button opens a custom wallet picker and QR
-   panel driven by `createWalletConnectController()`.
+   and supported Solana instructions, the WalletConnect button opens a custom
+   wallet picker and QR panel driven by `createWalletConnectController()`. TRON
+   WalletConnect payments remain disabled until a target wallet's transaction
+   construction, signing, and broadcast contract is verified; TRON still uses
+   injected TronLink / TronWeb providers.
 3. **Wait confirmed / finalized**: polls `GET /v1/payment-orders/:id` while the
    scanner and confirmations watcher advance the order.
 
