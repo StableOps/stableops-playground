@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 
 import { Playground, Checkout } from '../src'
 import './styles.css'
+import '@stableops/wallet-ui/walletconnect-dialog.css'
 
 // 独立运行入口（dev harness）：默认指向本地 API（先跑 `pnpm --filter @stableops/api dev`），
 // 可用环境变量 VITE_STABLEOPS_API_URL 覆盖。打开页面后在组件里粘贴 sandbox API key 即可。
@@ -44,7 +45,9 @@ function App() {
           type="button"
           onClick={() => setTab('playground')}
           className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            tab === 'playground' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            tab === 'playground'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           }`}>
           {locale === 'zh' ? '支付 Playground' : 'Payment Playground'}
         </button>
@@ -52,7 +55,9 @@ function App() {
           type="button"
           onClick={() => setTab('checkout')}
           className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            tab === 'checkout' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            tab === 'checkout'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           }`}>
           {locale === 'zh' ? '收银台 Demo' : 'Checkout Demo'}
         </button>
@@ -69,6 +74,7 @@ function App() {
           baseUrl={baseUrl}
           locale={locale}
           checkoutUrl={checkoutUrl}
+          walletConnectProjectId={walletConnectProjectId}
         />
       )}
     </main>

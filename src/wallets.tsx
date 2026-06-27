@@ -2,15 +2,14 @@
 
 import type { ReactNode } from 'react'
 
+import { WALLET_LOGOS } from '@stableops/wallet-ui'
 import type { WalletConnectWalletOption } from '@stableops/wallet-sdk'
 
-import { WALLET_LOGOS } from './wallet-logos'
-
 // 手机钱包弹窗的钱包目录：在 SDK 的 WalletConnectWalletOption（id / name / links / iconUrl）上，
-// 给主流钱包挂官方 logo（iconUrl=内联 data URI，源自 explorer-api.walletconnect.com，见 wallet-logos.ts），
-// 无官方图标的钱包可用内联 SVG + 品牌底色兜底。
+// 给主流钱包挂官方 logo（iconUrl=内联 data URI，源自 wallet-ui 共享资源），
+// 无官方图标的钱包可用内联 SVG / initials + 品牌底色兜底。
 //
-// 图标全部内联（data URI / inline SVG）：零运行时网络、库自包含，将来可原样搬到 apps/checkout。
+// 图标全部内联（data URI / inline SVG）：零运行时网络、库自包含，并与 apps/checkout 复用同一套渲染。
 //
 // links 用于移动端深链：原生 scheme（native）与 universal link 均遵循 WalletConnect 的
 // `<prefix>wc?uri=<encodedUri>` 约定。把握不大的 universal 一律省略——二维码对所有钱包永远兜底。
@@ -146,24 +145,3 @@ export const TRON_APP_WALLETS: PlaygroundWallet[] = [
     iconUrl: WALLET_LOGOS.okx,
   },
 ]
-
-// 渲染单个钱包图标：有官方 logo 用 <img>，否则品牌底色块 + 内联标志兜底。
-export function WalletIcon({ wallet }: { wallet: PlaygroundWallet }): ReactNode {
-  if (wallet.iconUrl) {
-    return (
-      <img
-        src={wallet.iconUrl}
-        alt={wallet.name}
-        className="size-12 shrink-0 rounded-lg object-cover ring-1 ring-black/5"
-      />
-    )
-  }
-  const Glyph = wallet.Glyph
-  return (
-    <span
-      className="flex size-12 shrink-0 items-center justify-center rounded-lg shadow-sm ring-1 ring-black/5"
-      style={{ background: wallet.brand }}>
-      {Glyph ? <Glyph /> : null}
-    </span>
-  )
-}

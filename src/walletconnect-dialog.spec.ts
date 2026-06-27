@@ -3,37 +3,55 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-describe('WalletConnectDialog responsive modal classes', () => {
-  it('uses a bottom sheet on small screens and a centered modal on larger screens', () => {
+describe('WalletConnectDialog shared UI adapter', () => {
+  it('reuses the public wallet-ui dialog instead of copying modal markup', () => {
     const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
 
-    expect(source).toContain('items-end')
-    expect(source).toContain('sm:items-center')
-    expect(source).toContain('rounded-t-2xl')
-    expect(source).toContain('sm:rounded-2xl')
-    expect(source).toContain('walletconnect-backdrop-in')
-    expect(source).toContain('walletconnect-sheet-in')
+    expect(source).toContain('@stableops/wallet-ui')
+    expect(source).toContain('SharedWalletConnectDialog')
+    expect(source).not.toContain('@stableops/wallet-ui/walletconnect-dialog.css')
+    expect(source).not.toContain('renderWalletIcon=')
+    expect(source).not.toContain('WalletIcon')
+    expect(source).not.toContain('PLACEHOLDER_QR_CODE')
   })
 
-  it('keeps the QR page layout stable while the QR code is loading', () => {
-    const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
+  it('does not bundle wallet-ui CSS as a runtime dependency', () => {
+    const dist = readFileSync(resolve(__dirname, '..', 'dist', 'walletconnect-dialog.js'), 'utf8')
 
-    expect(source).toContain('PLACEHOLDER_QR_CODE')
-    expect(source).toContain('alt=""')
-    expect(source).toContain('backdrop-blur')
-    expect(source).toContain("state.status === 'uri_ready' ? state.uri : null")
-    expect(source).toContain('pointer-events-none cursor-not-allowed opacity-50')
-    expect(source).toContain('aria-disabled={walletHref ? false : true}')
-    expect(source).toContain('disabled={!readyUri}')
+    expect(dist).not.toContain('@stableops/wallet-ui/walletconnect-dialog.css')
   })
 
-  it('uses the QR page for direct wallet app links too', () => {
+  it('reuses wallet-ui logos and default icon rendering', () => {
+    const source = readFileSync(resolve(__dirname, 'wallets.tsx'), 'utf8')
+
+    expect(source).toContain("import { WALLET_LOGOS } from '@stableops/wallet-ui'")
+    expect(source).not.toContain("from './wallet-logos'")
+    expect(source).not.toContain('export function WalletIcon')
+  })
+
+  it('adapts typesafe-i18n labels to the public copy contract', () => {
     const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
 
-    expect(source).toContain('walletLinkMode && readyUri')
-    expect(source).toContain('? readyUri')
-    expect(source).toContain("state.status === 'uri_ready'")
-    expect(source).toContain('disabled={!readyUri}')
+    expect(source).toContain('function toWalletConnectCopy')
+    expect(source).toContain('labels.payWith({ wallet })')
+    expect(source).toContain('labels.scanWithWallet({ wallet })')
+    expect(source).toContain('labels.openWallet({ wallet })')
+  })
+
+  it('keeps playground copy feedback self-contained while using the shared dialog', () => {
+    const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
+
+    expect(source).toContain('navigator.clipboard.writeText(uri)')
+    expect(source).toContain('copied={copied}')
+    expect(source).toContain('onCopyUri={(uri) => void onCopyUri(uri)}')
+  })
+
+  it('passes only one optional theme color to the shared dialog', () => {
+    const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
+
+    expect(source).toContain('themeColor?: string')
+    expect(source).toContain('themeColor={themeColor}')
+    expect(source).not.toContain('themeColorStrong')
   })
 
   it('does not render explanatory hint text in the wallet picker', () => {
