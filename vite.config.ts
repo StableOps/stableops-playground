@@ -14,6 +14,9 @@ const workspaceDeps = ['@stableops/api-sdk', '@stableops/wallet-sdk']
 
 export default defineConfig({
   root: 'example',
+  // envDir 默认等于 root（example/），会导致 .env 必须放进 example/ 才生效。
+  // 指回包根（相对 root 的 '..'）：让 .env / VITE_* 放在 packages/playground/ 即可被读取。
+  envDir: '..',
   plugins: [react(), tailwindcss()],
   optimizeDeps: {
     include: workspaceDeps,
