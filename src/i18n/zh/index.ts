@@ -36,6 +36,7 @@ const zh = {
     paymentPrompt: '已连接 {wallet}，请在钱包 App 内确认交易；如果没有弹出支付界面，可再次触发支付。',
     retryPayment: '再次打开 {wallet} 支付',
     retryingPayment: '正在打开支付…',
+    refreshConnection: '刷新二维码',
     or: '或',
     back: '返回',
     connectFailed: '连接失败',

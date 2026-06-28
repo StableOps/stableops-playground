@@ -29,8 +29,10 @@ export type WalletConnectDialogProps = {
   error: WalletConnectDialogError | null
   themeColor?: string
   paymentPending?: boolean
+  connectionRefreshAvailable?: boolean
   onSelectWallet: (wallet: PlaygroundWallet) => void
   onRetryPayment?: () => void
+  onRefreshConnection?: () => void
   walletLinkMode?: boolean
   onBack: () => void
   onClose: () => void
@@ -83,6 +85,7 @@ function toWalletConnectCopy(
     paymentPrompt: (wallet) => labels.paymentPrompt({ wallet }),
     retryPayment: (wallet) => labels.retryPayment({ wallet }),
     retryingPayment: labels.retryingPayment(),
+    refreshConnection: labels.refreshConnection(),
     copyUri: labels.copyUri(),
     copied: copiedLabel,
     or: labels.or(),
@@ -104,8 +107,10 @@ export function WalletConnectDialog({
   error,
   themeColor,
   paymentPending = false,
+  connectionRefreshAvailable = false,
   onSelectWallet,
   onRetryPayment,
+  onRefreshConnection,
   walletLinkMode = false,
   onBack,
   onClose,
@@ -133,11 +138,14 @@ export function WalletConnectDialog({
       qrCode={qrCode}
       error={error}
       walletLinkMode={walletLinkMode}
+      useShadowRoot={true}
       themeColor={themeColor}
       copied={copied}
       paymentPending={paymentPending}
+      connectionRefreshAvailable={connectionRefreshAvailable}
       onSelectWallet={onSelectWallet}
       onRetryPayment={onRetryPayment}
+      onRefreshConnection={onRefreshConnection}
       onBack={onBack}
       onClose={onClose}
       onCopyUri={(uri) => void onCopyUri(uri)}

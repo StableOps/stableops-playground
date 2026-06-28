@@ -60,6 +60,7 @@ export type PlaygroundProps = {
 // 嵌入方常常不知道该不该开；放在 UI 里让用户当面选，且关闭时给出失败兜底提示。
 
 type DemoChain = string
+const WALLETCONNECT_CONNECT_REFRESH_LIMIT = 3
 
 function toWalletConnectDialogError(error: unknown): WalletConnectDialogError {
   if (error instanceof Error) {
@@ -68,6 +69,14 @@ function toWalletConnectDialogError(error: unknown): WalletConnectDialogError {
     return error.message
   }
   return String(error)
+}
+
+function isWalletConnectConnectFailed(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: unknown }).code === 'walletconnect_connect_failed'
+  )
 }
 
 export function Playground({
@@ -129,6 +138,7 @@ export function Playground({
   const [walletConnectError, setWalletConnectError] = useState<WalletConnectDialogError | null>(
     null,
   )
+  const [walletConnectRefreshAvailable, setWalletConnectRefreshAvailable] = useState(false)
   // 弹窗两步视图：null=钱包列表页；非空=该钱包的二维码页（同时决定「打开 App」深链指向）。
   const [selectedWalletConnectId, setSelectedWalletConnectId] = useState<string | null>(null)
   // 用户在二维码页点「返回」会主动断开在途连接，使 connect() reject；据此抑制由此产生的误报错误。
@@ -255,6 +265,7 @@ export function Playground({
     setWalletConnectState({ status: 'idle', wallets: walletConnectWallets })
     setWalletConnectQrCode(null)
     setWalletConnectError(null)
+    setWalletConnectRefreshAvailable(false)
     setSelectedWalletConnectId(null)
     if (controller) await controller.disconnect().catch(() => undefined)
   }, [walletConnectController, walletConnectWallets])
@@ -263,6 +274,7 @@ export function Playground({
     setWalletConnectOpen(true)
     setWalletConnectHidden(false)
     setWalletConnectError(null)
+    setWalletConnectRefreshAvailable(false)
     setSelectedWalletConnectId(null)
   }, [])
 
@@ -273,6 +285,7 @@ export function Playground({
     setSelectedWalletConnectId(null)
     setWalletConnectQrCode(null)
     setWalletConnectError(null)
+    setWalletConnectRefreshAvailable(false)
     const controller = walletConnectController
     if (controller) await controller.disconnect().catch(() => undefined)
     walletConnectCancelling.current = false
@@ -347,6 +360,7 @@ export function Playground({
       return
     }
     setWalletConnectError(null)
+    setWalletConnectRefreshAvailable(false)
     setSelectedWalletConnectId(wallet.id)
     setWalletConnectState({ status: 'uri_ready', wallets: mobileWallets, selectedWallet: wallet, uri: url })
     setWalletConnectQrCode(null)
@@ -377,29 +391,47 @@ export function Playground({
       const controller = walletConnectController
       if (!controller) return
       setWalletConnectError(null)
+      setWalletConnectRefreshAvailable(false)
+      setWalletConnectQrCode(null)
       setSelectedWalletConnectId(wallet.id)
-      try {
-        await controller.connect({ walletId: wallet.id })
-        const unauthorizedChains = getUnauthorizedWalletConnectChains(
-          walletConnectChainSelection.supportedChains,
-          controller.providers,
-        )
-        if (unauthorizedChains.length === walletConnectChainSelection.supportedChains.length) {
-          setWalletConnectError(
-            LL.walletConnect.chainNotAuthorized({
-              chains: unauthorizedChains
-                .map((chain) => chainLabel(chainOptions, chain))
-                .join(LL.sep()),
-            }),
+      for (let refreshCount = 0; ; refreshCount += 1) {
+        try {
+          await controller.connect({ walletId: wallet.id })
+          const unauthorizedChains = getUnauthorizedWalletConnectChains(
+            walletConnectChainSelection.supportedChains,
+            controller.providers,
           )
+          if (unauthorizedChains.length === walletConnectChainSelection.supportedChains.length) {
+            setWalletConnectError(
+              LL.walletConnect.chainNotAuthorized({
+                chains: unauthorizedChains
+                  .map((chain) => chainLabel(chainOptions, chain))
+                  .join(LL.sep()),
+              }),
+            )
+            return
+          }
+          const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)
+          if (paid) setWalletConnectOpen(false)
+          return
+        } catch (err) {
+          // 用户主动返回（断开在途连接）导致的 reject 不是错误，静默忽略。
+          if (walletConnectCancelling.current) return
+          if (
+            isWalletConnectConnectFailed(err) &&
+            refreshCount < WALLETCONNECT_CONNECT_REFRESH_LIMIT
+          ) {
+            setWalletConnectError(null)
+            setWalletConnectQrCode(null)
+            await controller.disconnect().catch(() => undefined)
+            if (walletConnectCancelling.current) return
+            continue
+          }
+          setWalletConnectQrCode(null)
+          if (isWalletConnectConnectFailed(err)) setWalletConnectRefreshAvailable(true)
+          setWalletConnectError(toWalletConnectDialogError(err))
           return
         }
-        const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)
-        if (paid) setWalletConnectOpen(false)
-      } catch (err) {
-        // 用户主动返回（断开在途连接）导致的 reject 不是错误，静默忽略。
-        if (walletConnectCancelling.current) return
-        setWalletConnectError(toWalletConnectDialogError(err))
       }
     },
     [
@@ -597,8 +629,12 @@ export function Playground({
         error={walletConnectError}
         walletLinkMode={walletLinkMode}
         paymentPending={busy === 'pay'}
+        connectionRefreshAvailable={walletConnectRefreshAvailable}
         onSelectWallet={(wallet) => void connectWalletConnect(wallet)}
         onRetryPayment={() => void retryWalletConnectPayment()}
+        onRefreshConnection={() => {
+          if (selectedWalletConnect) void connectWalletConnect(selectedWalletConnect)
+        }}
         onBack={() => void backToWalletList()}
         onClose={() => {
           setWalletConnectOpen(false)

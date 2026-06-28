@@ -146,6 +146,10 @@ type RootTranslation = {
 		 */
 		retryingPayment: string
 		/**
+		 * R​e​f​r​e​s​h​ ​Q​R
+		 */
+		refreshConnection: string
+		/**
 		 * o​r
 		 */
 		or: string
@@ -684,6 +688,10 @@ export type TranslationFunctions = {
 		 * Opening payment…
 		 */
 		retryingPayment: () => LocalizedString
+		/**
+		 * Refresh QR
+		 */
+		refreshConnection: () => LocalizedString
 		/**
 		 * or
 		 */

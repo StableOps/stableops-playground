@@ -38,6 +38,7 @@ const en = {
       '{wallet} is connected. Confirm the transaction in your wallet app; if no payment screen appears, trigger payment again.',
     retryPayment: 'Trigger {wallet} payment again',
     retryingPayment: 'Opening payment…',
+    refreshConnection: 'Refresh QR',
     or: 'or',
     back: 'Back',
     connectFailed: 'Connection failed',

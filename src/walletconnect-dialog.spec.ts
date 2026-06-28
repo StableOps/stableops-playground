@@ -15,6 +15,13 @@ describe('WalletConnectDialog shared UI adapter', () => {
     expect(source).not.toContain('PLACEHOLDER_QR_CODE')
   })
 
+  it('renders the shared dialog in a shadow root so MDX prose styles cannot leak in', () => {
+    const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
+
+    expect(source).toContain('useShadowRoot')
+    expect(source).toContain('useShadowRoot={true}')
+  })
+
   it('does not bundle wallet-ui CSS as a runtime dependency', () => {
     const dist = readFileSync(resolve(__dirname, '..', 'dist', 'walletconnect-dialog.js'), 'utf8')
 
@@ -87,5 +94,17 @@ describe('WalletConnectDialog shared UI adapter', () => {
     expect(connectSource).toContain('const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)')
     expect(connectSource).toContain('if (paid) setWalletConnectOpen(false)')
     expect(source).toContain('onRetryPayment={() => void retryWalletConnectPayment()}')
+  })
+
+  it('auto-refreshes failed WalletConnect connection QR codes three times before exposing manual refresh', () => {
+    const source = readFileSync(resolve(__dirname, 'playground.tsx'), 'utf8')
+
+    expect(source).toContain('const WALLETCONNECT_CONNECT_REFRESH_LIMIT = 3')
+    expect(source).toContain('function isWalletConnectConnectFailed')
+    expect(source).toContain('refreshCount < WALLETCONNECT_CONNECT_REFRESH_LIMIT')
+    expect(source).toContain('await controller.disconnect().catch(() => undefined)')
+    expect(source).toContain('setWalletConnectRefreshAvailable(true)')
+    expect(source).toContain('connectionRefreshAvailable={walletConnectRefreshAvailable}')
+    expect(source).toContain('onRefreshConnection={() => {')
   })
 })
