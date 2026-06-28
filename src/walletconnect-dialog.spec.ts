@@ -15,11 +15,10 @@ describe('WalletConnectDialog shared UI adapter', () => {
     expect(source).not.toContain('PLACEHOLDER_QR_CODE')
   })
 
-  it('renders the shared dialog in a shadow root so MDX prose styles cannot leak in', () => {
+  it('relies on wallet-ui typography resets instead of shadow root isolation', () => {
     const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
 
-    expect(source).toContain('useShadowRoot')
-    expect(source).toContain('useShadowRoot={true}')
+    expect(source).not.toContain('useShadowRoot')
   })
 
   it('does not bundle wallet-ui CSS as a runtime dependency', () => {

@@ -138,7 +138,6 @@ export function WalletConnectDialog({
       qrCode={qrCode}
       error={error}
       walletLinkMode={walletLinkMode}
-      useShadowRoot={true}
       themeColor={themeColor}
       copied={copied}
       paymentPending={paymentPending}
