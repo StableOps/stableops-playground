@@ -46,7 +46,7 @@ export type UsePlaygroundState = {
   log: string[]
   busy: string | null
   createOrder: () => Promise<void>
-  payWithWallet: (providers?: WalletProviderByChain, preferredChain?: ChainId) => Promise<void>
+  payWithWallet: (providers?: WalletProviderByChain, preferredChain?: ChainId) => Promise<boolean>
   markManualTransfer: () => Promise<void>
   waitForOrderStatus: (target: WaitTarget, index: number) => Promise<boolean>
   reset: () => void
@@ -348,7 +348,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
 
   const payWithWallet = useCallback(
     async (extraProviders: WalletProviderByChain = {}, preferredChain?: ChainId) => {
-      if (!order) return
+      if (!order) return false
 
       const walletInstructions = order.paymentInstructions.map(toWalletInstruction)
       const providers = mergeWalletProviders(getInjectedWalletProviders(), extraProviders)
@@ -371,7 +371,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
           }),
         )
         setBusy(null)
-        return
+        return false
       }
 
       setBusy('pay')
@@ -387,7 +387,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
               ? 'https://api.devnet.solana.com'
               : undefined,
         })
-        if (gen !== pollGenRef.current) return
+        if (gen !== pollGenRef.current) return false
 
         // 在后台监听链上确认结果：revert 时更新 UI，但若 scanner 已推进则以链上为准。
         const guard = createConfirmationProgressGuard()
@@ -407,20 +407,30 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
           link: txUrl ? { href: txUrl, label: LL.status.viewTx() } : undefined,
         })
         append(LL.log.walletSent({ hash: sent.txHash }))
-        const fresh = await refreshOrder(order.id)
-        if (gen !== pollGenRef.current) return
-        // 如果服务端已推进（refreshOrder 返回非 created），立即标记避免异步 confirmation reject 冲突。
-        if (fresh && fresh.status !== 'created') guard.markProgressed()
-        // 由这里接管 detected→confirmed→finalized 接力。
-        await continueToFinal(order.id)
-        guard.markProgressed()
+        void (async () => {
+          const fresh = await refreshOrder(order.id)
+          if (gen !== pollGenRef.current) return
+          // 如果服务端已推进（refreshOrder 返回非 created），立即标记避免异步 confirmation reject 冲突。
+          if (fresh && fresh.status !== 'created') guard.markProgressed()
+          // 由这里接管 detected→confirmed→finalized 接力。
+          await continueToFinal(order.id)
+          guard.markProgressed()
+        })()
+          .catch((err) => {
+            if (gen !== pollGenRef.current) return
+            append(LL.log.refreshFailed({ error: errMessage(err) }))
+          })
+          .finally(() => {
+            if (gen === pollGenRef.current) setBusy(null)
+          })
+        return true
       } catch (err) {
-        if (gen !== pollGenRef.current) return
+        if (gen !== pollGenRef.current) return false
         const message = formatWalletError(err)
         updateStep(1, { status: 'error', detail: message })
         append(LL.log.walletFailed({ message }))
-      } finally {
         if (gen === pollGenRef.current) setBusy(null)
+        return false
       }
     },
     [append, order, refreshOrder, updateStep, continueToFinal, LL],

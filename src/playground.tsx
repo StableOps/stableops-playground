@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, cn, Input, Label, MultiSelect } from './ui'
 import { CopyButton, StatusBadge, type Step } from './ui-bits'
 import { TRON_APP_WALLETS, WALLETCONNECT_WALLETS, type PlaygroundWallet } from './wallets'
-import { WalletConnectDialog } from './walletconnect-dialog'
+import { WalletConnectDialog, type WalletConnectDialogError } from './walletconnect-dialog'
 import {
   DEFAULT_BASE_URL,
   buildTronWalletAppUrl,
@@ -60,6 +60,15 @@ export type PlaygroundProps = {
 // 嵌入方常常不知道该不该开；放在 UI 里让用户当面选，且关闭时给出失败兜底提示。
 
 type DemoChain = string
+
+function toWalletConnectDialogError(error: unknown): WalletConnectDialogError {
+  if (error instanceof Error) {
+    const code = (error as { code?: unknown }).code
+    if (typeof code === 'string') return { code, message: error.message }
+    return error.message
+  }
+  return String(error)
+}
 
 export function Playground({
   apiKey: apiKeyProp,
@@ -117,7 +126,9 @@ export function Playground({
     wallets: WALLETCONNECT_WALLETS,
   })
   const [walletConnectQrCode, setWalletConnectQrCode] = useState<string | null>(null)
-  const [walletConnectError, setWalletConnectError] = useState<string | null>(null)
+  const [walletConnectError, setWalletConnectError] = useState<WalletConnectDialogError | null>(
+    null,
+  )
   // 弹窗两步视图：null=钱包列表页；非空=该钱包的二维码页（同时决定「打开 App」深链指向）。
   const [selectedWalletConnectId, setSelectedWalletConnectId] = useState<string | null>(null)
   // 用户在二维码页点「返回」会主动断开在途连接，使 connect() reject；据此抑制由此产生的误报错误。
@@ -230,7 +241,7 @@ export function Playground({
         if (!cancelled) setWalletConnectQrCode(dataUrl)
       })
       .catch((err: unknown) => {
-        if (!cancelled) setWalletConnectError(err instanceof Error ? err.message : String(err))
+        if (!cancelled) setWalletConnectError(toWalletConnectDialogError(err))
       })
     return () => {
       cancelled = true
@@ -302,7 +313,7 @@ export function Playground({
         setWalletConnectController(controller)
       } catch (err) {
         if (!cancelled) {
-          setWalletConnectError(err instanceof Error ? err.message : String(err))
+          setWalletConnectError(toWalletConnectDialogError(err))
         }
       }
     })()
@@ -347,7 +358,7 @@ export function Playground({
       })
       setWalletConnectQrCode(dataUrl)
     } catch (err) {
-      setWalletConnectError(err instanceof Error ? err.message : String(err))
+      setWalletConnectError(toWalletConnectDialogError(err))
     }
   }, [mobileWallets, order])
 
@@ -383,14 +394,12 @@ export function Playground({
           )
           return
         }
-        // 连接成功后立即收起弹窗；controller 仍保持存活，供后续签名/广播复用。
-        setWalletConnectHidden(true)
-        await payWithWallet(controller.providers, selectedPayChain ?? undefined)
-        setWalletConnectOpen(false)
+        const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)
+        if (paid) setWalletConnectOpen(false)
       } catch (err) {
         // 用户主动返回（断开在途连接）导致的 reject 不是错误，静默忽略。
         if (walletConnectCancelling.current) return
-        setWalletConnectError(err instanceof Error ? err.message : String(err))
+        setWalletConnectError(toWalletConnectDialogError(err))
       }
     },
     [
@@ -406,6 +415,14 @@ export function Playground({
       walletConnectController,
     ],
   )
+
+  const retryWalletConnectPayment = useCallback(async () => {
+    const controller = walletConnectController
+    if (!controller) return
+    setWalletConnectError(null)
+    const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)
+    if (paid) setWalletConnectOpen(false)
+  }, [payWithWallet, selectedPayChain, walletConnectController])
 
   return (
     <div className={cn('not-prose my-6 space-y-5', className)}>
@@ -579,7 +596,9 @@ export function Playground({
         qrCode={walletConnectQrCode}
         error={walletConnectError}
         walletLinkMode={walletLinkMode}
+        paymentPending={busy === 'pay'}
         onSelectWallet={(wallet) => void connectWalletConnect(wallet)}
+        onRetryPayment={() => void retryWalletConnectPayment()}
         onBack={() => void backToWalletList()}
         onClose={() => {
           setWalletConnectOpen(false)

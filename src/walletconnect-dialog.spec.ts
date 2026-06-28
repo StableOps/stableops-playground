@@ -36,6 +36,23 @@ describe('WalletConnectDialog shared UI adapter', () => {
     expect(source).toContain('labels.payWith({ wallet })')
     expect(source).toContain('labels.scanWithWallet({ wallet })')
     expect(source).toContain('labels.openWallet({ wallet })')
+    expect(source).toContain('labels.paymentPrompt({ wallet })')
+    expect(source).toContain('labels.retryPayment({ wallet })')
+  })
+
+  it('maps known WalletConnect error codes through typesafe-i18n and leaves unknown details to the shared dialog', () => {
+    const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
+    const playgroundSource = readFileSync(resolve(__dirname, 'playground.tsx'), 'utf8')
+    const zhSource = readFileSync(resolve(__dirname, 'i18n', 'zh', 'index.ts'), 'utf8')
+
+    expect(source).toContain('function walletConnectErrorMessage')
+    expect(source).toContain("case 'walletconnect_connect_failed'")
+    expect(source).toContain('errorMessage: (code) => walletConnectErrorMessage(labels, code)')
+    expect(playgroundSource).toContain('type WalletConnectDialogError')
+    expect(playgroundSource).toContain('function toWalletConnectDialogError')
+    expect(playgroundSource).toContain('setWalletConnectError(toWalletConnectDialogError(err))')
+    expect(zhSource).toContain('errors: {')
+    expect(zhSource).toContain('connectFailed:')
   })
 
   it('keeps playground copy feedback self-contained while using the shared dialog', () => {
@@ -58,5 +75,17 @@ describe('WalletConnectDialog shared UI adapter', () => {
     const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
 
     expect(source).not.toContain('labels.hint()')
+  })
+
+  it('keeps WalletConnect modal open after connect until tx hash is returned', () => {
+    const source = readFileSync(resolve(__dirname, 'playground.tsx'), 'utf8')
+    const connectStart = source.indexOf('const connectWalletConnect = useCallback')
+    const renderStart = source.indexOf('return (', connectStart)
+    const connectSource = source.slice(connectStart, renderStart)
+
+    expect(connectSource).not.toContain('setWalletConnectHidden(true)')
+    expect(connectSource).toContain('const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)')
+    expect(connectSource).toContain('if (paid) setWalletConnectOpen(false)')
+    expect(source).toContain('onRetryPayment={() => void retryWalletConnectPayment()}')
   })
 })

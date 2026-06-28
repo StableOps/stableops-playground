@@ -34,9 +34,34 @@ const en = {
     scanWithWallet: 'Scan with {wallet} on your phone',
     scanAnyWallet: 'Scan with any mobile wallet',
     payWith: 'Pay with {wallet}',
+    paymentPrompt:
+      '{wallet} is connected. Confirm the transaction in your wallet app; if no payment screen appears, trigger payment again.',
+    retryPayment: 'Trigger {wallet} payment again',
+    retryingPayment: 'Opening payment…',
     or: 'or',
     back: 'Back',
     connectFailed: 'Connection failed',
+    errors: {
+      dependencyMissing:
+        'WalletConnect is not loaded in this environment. Refresh the page and try again.',
+      projectIdMissing: 'WalletConnect projectId is not configured, so mobile wallet pay cannot open.',
+      initFailed: 'WalletConnect failed to initialize. Check your connection and retry.',
+      connectFailed: 'WalletConnect failed to connect. Go back to the wallet list and retry.',
+      noAuthorizedChains:
+        'Your wallet did not authorize the required networks. Reconnect and select the requested network.',
+      tronUnsupported:
+        'WalletConnect does not support TRON payments yet. Use a supported mobile wallet app or manual transfer.',
+      providerMismatch:
+        'The wallet returned a different network than the order requires. Switch networks and retry.',
+      providerNotFound:
+        'No wallet authorization was found for this order network. Go back, reconnect, and authorize it.',
+      txReverted: 'The on-chain transaction was reverted. Pay again or contact the merchant.',
+      tokenContractNotFound:
+        'The default token contract is not configured for this network. Check the testnet config.',
+      paymentInstructionNotFound:
+        'This order does not have an available on-chain payment instruction.',
+      unsupportedChain: 'The wallet SDK does not support this payment network.',
+    },
   },
   manual: {
     heading: 'Or transfer manually',
