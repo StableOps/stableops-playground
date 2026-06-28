@@ -51,6 +51,7 @@ export type UsePlaygroundState = {
   markManualTransfer: () => Promise<void>
   waitForOrderStatus: (target: WaitTarget, index: number) => Promise<boolean>
   reset: () => void
+  cancelPayment: () => void
 }
 
 // 整个订单流程的状态机:state + refs + 所有 action。
@@ -115,6 +116,11 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     setLog([])
     setBusy(null)
   }, [initialSteps])
+
+  const cancelPayment = useCallback(() => {
+    pollGenRef.current += 1
+    setBusy(null)
+  }, [])
 
   const refreshOrder = useCallback(
     async (id: string) => {
@@ -462,6 +468,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
       markManualTransfer,
       waitForOrderStatus: waitForOrderStatusPublic,
       reset,
+      cancelPayment,
     }),
     [
       order,
@@ -473,6 +480,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
       markManualTransfer,
       waitForOrderStatusPublic,
       reset,
+      cancelPayment,
     ],
   )
 }

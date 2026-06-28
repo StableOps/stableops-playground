@@ -179,6 +179,7 @@ export function Playground({
     markManualTransfer,
     waitForOrderStatus,
     reset,
+    cancelPayment,
   } = usePlaygroundState({
     client,
     LL,
@@ -259,6 +260,7 @@ export function Playground({
   }, [walletConnectState])
 
   const resetWalletConnect = useCallback(async () => {
+    cancelPayment()
     const controller = walletConnectController
     setWalletConnectController(null)
     setWalletConnectHidden(false)
@@ -268,7 +270,7 @@ export function Playground({
     setWalletConnectRefreshAvailable(false)
     setSelectedWalletConnectId(null)
     if (controller) await controller.disconnect().catch(() => undefined)
-  }, [walletConnectController, walletConnectWallets])
+  }, [cancelPayment, walletConnectController, walletConnectWallets])
 
   const openWalletConnect = useCallback(() => {
     setWalletConnectOpen(true)
@@ -281,6 +283,7 @@ export function Playground({
   // 二维码页「返回」：断开在途连接并回到钱包列表（controller 保留复用）。断开会让在途 connect()
   // reject，用 walletConnectCancelling 抑制由此产生的误报错误；断开后下次选钱包会重新出 URI。
   const backToWalletList = useCallback(async () => {
+    cancelPayment()
     walletConnectCancelling.current = true
     setSelectedWalletConnectId(null)
     setWalletConnectQrCode(null)
@@ -289,7 +292,7 @@ export function Playground({
     const controller = walletConnectController
     if (controller) await controller.disconnect().catch(() => undefined)
     walletConnectCancelling.current = false
-  }, [walletConnectController])
+  }, [cancelPayment, walletConnectController])
 
   // Modal 打开后惰性创建 controller，并随关闭 / 链集合变化彻底 disconnect。
   // 关键：原实现每次点钱包按钮都 new 一个 controller，导致同一 tab 内多份 EthereumProvider
