@@ -618,8 +618,7 @@ export function Playground({
 
       <WalletConnectDialog
         open={walletConnectOpen && !walletConnectHidden}
-        labels={LL.walletConnect}
-        copiedLabel={LL.manual.copied()}
+        locale={locale}
         projectId={walletConnectProjectId}
         available={mobileWalletAvailable}
         wallets={mobileWallets}

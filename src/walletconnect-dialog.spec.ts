@@ -35,30 +35,23 @@ describe('WalletConnectDialog shared UI adapter', () => {
     expect(source).not.toContain('export function WalletIcon')
   })
 
-  it('adapts typesafe-i18n labels to the public copy contract', () => {
+  it('使用 wallet-ui 内建文案，通过 locale prop 指定语言', () => {
     const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
 
-    expect(source).toContain('function toWalletConnectCopy')
-    expect(source).toContain('labels.payWith({ wallet })')
-    expect(source).toContain('labels.scanWithWallet({ wallet })')
-    expect(source).toContain('labels.openWallet({ wallet })')
-    expect(source).toContain('labels.paymentPrompt({ wallet })')
-    expect(source).toContain('labels.retryPayment({ wallet })')
+    expect(source).toContain('locale={locale}')
+    expect(source).not.toContain('function toWalletConnectCopy')
+    expect(source).not.toContain('labels.payWith')
   })
 
-  it('maps known WalletConnect error codes through typesafe-i18n and leaves unknown details to the shared dialog', () => {
+  it('WalletConnect error code 由 wallet-ui 内建 errorMessage 处理', () => {
     const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
     const playgroundSource = readFileSync(resolve(__dirname, 'playground.tsx'), 'utf8')
-    const zhSource = readFileSync(resolve(__dirname, 'i18n', 'zh', 'index.ts'), 'utf8')
 
-    expect(source).toContain('function walletConnectErrorMessage')
-    expect(source).toContain("case 'walletconnect_connect_failed'")
-    expect(source).toContain('errorMessage: (code) => walletConnectErrorMessage(labels, code)')
+    expect(source).not.toContain('function walletConnectErrorMessage')
+    expect(source).not.toContain("case 'walletconnect_connect_failed'")
     expect(playgroundSource).toContain('type WalletConnectDialogError')
     expect(playgroundSource).toContain('function toWalletConnectDialogError')
     expect(playgroundSource).toContain('setWalletConnectError(toWalletConnectDialogError(err))')
-    expect(zhSource).toContain('errors: {')
-    expect(zhSource).toContain('connectFailed:')
   })
 
   it('keeps playground copy feedback self-contained while using the shared dialog', () => {
