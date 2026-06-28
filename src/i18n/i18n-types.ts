@@ -233,6 +233,10 @@ type RootTranslation = {
 		 */
 		walletProviderNotFound: string
 		/**
+		 * T​r​o​n​L​i​n​k​ ​i​s​ ​n​o​t​ ​r​e​a​d​y​;​ ​p​l​e​a​s​e​ ​m​a​k​e​ ​s​u​r​e​ ​T​r​o​n​L​i​n​k​ ​i​s​ ​i​n​s​t​a​l​l​e​d​,​ ​a​u​t​h​o​r​i​z​e​d​ ​a​n​d​ ​u​n​l​o​c​k​e​d
+		 */
+		tronAddressNotReady: string
+		/**
 		 * w​a​i​t​i​n​g​ ​f​o​r​ ​w​a​l​l​e​t​ ​c​o​n​f​i​r​m​a​t​i​o​n​…
 		 */
 		waitingWallet: string
@@ -649,6 +653,10 @@ export type TranslationFunctions = {
 		 * wallet provider not found
 		 */
 		walletProviderNotFound: () => LocalizedString
+		/**
+		 * TronLink is not ready; please make sure TronLink is installed, authorized and unlocked
+		 */
+		tronAddressNotReady: () => LocalizedString
 		/**
 		 * waiting for wallet confirmation…
 		 */

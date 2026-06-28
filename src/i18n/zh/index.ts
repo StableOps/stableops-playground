@@ -72,6 +72,7 @@ const zh = {
     orderStatus: 'order={status}',
     timeout: '等待 {target} 超时；scanner 可能仍在追赶中',
     walletProviderNotFound: '未找到钱包 provider',
+    tronAddressNotReady: 'TronLink 未就绪；请确保已安装 TronLink、已授权并解锁',
     waitingWallet: '等待钱包确认…',
     txHash: 'tx {hash}',
     viewTx: '在区块浏览器查看 ↗',

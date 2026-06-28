@@ -6,6 +6,7 @@ import {
   getInjectedWalletProviders,
   selectWalletPaymentInstruction,
   sendWalletPayment,
+  StableOpsWalletError,
   type ChainId,
   type WalletProviderByChain,
 } from '@stableops/wallet-sdk'
@@ -426,7 +427,10 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         return true
       } catch (err) {
         if (gen !== pollGenRef.current) return false
-        const message = formatWalletError(err)
+        const message =
+          err instanceof StableOpsWalletError && err.code === 'tron_address_not_ready'
+            ? LL.status.tronAddressNotReady()
+            : formatWalletError(err)
         updateStep(1, { status: 'error', detail: message })
         append(LL.log.walletFailed({ message }))
         if (gen === pollGenRef.current) setBusy(null)

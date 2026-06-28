@@ -74,6 +74,7 @@ const en = {
     orderStatus: 'order={status}',
     timeout: 'timeout waiting for {target}; scanner may still be catching up',
     walletProviderNotFound: 'wallet provider not found',
+    tronAddressNotReady: 'TronLink is not ready; please make sure TronLink is installed, authorized and unlocked',
     waitingWallet: 'waiting for wallet confirmation…',
     txHash: 'tx {hash}',
     viewTx: 'View on block explorer ↗',
