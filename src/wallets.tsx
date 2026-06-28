@@ -56,17 +56,6 @@ export const WALLETCONNECT_WALLETS: PlaygroundWallet[] = [
     },
   },
   {
-    id: 'phantom',
-    name: 'Phantom',
-    families: ['solana'],
-    iconUrl: WALLET_LOGOS.phantom,
-    brand: '#AB9FF2',
-    links: {
-      native: 'phantom://wc?uri=',
-      universal: 'https://phantom.app/ul/browse?ref=',
-    },
-  },
-  {
     id: 'rainbow',
     name: 'Rainbow',
     families: ['evm'],

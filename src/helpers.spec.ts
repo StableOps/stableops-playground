@@ -90,7 +90,6 @@ describe('filterWalletConnectWallets', () => {
     { id: 'metamask', name: 'MetaMask', families: ['evm'] },
     { id: 'trust', name: 'Trust Wallet', families: ['evm', 'solana'] },
     { id: 'binance', name: 'Binance Wallet', families: ['evm', 'solana'] },
-    { id: 'phantom', name: 'Phantom', families: ['solana'] },
     { id: 'tronlink', name: 'TronLink', families: ['tron'] },
     { id: 'tokenpocket', name: 'TokenPocket', families: ['tron'] },
     { id: 'okx-tron', name: 'OKX Wallet', families: ['tron'] },
@@ -99,7 +98,7 @@ describe('filterWalletConnectWallets', () => {
 
   it('shows only Solana-capable wallets for Solana-only orders', () => {
     expect(filterWalletConnectWallets(wallets, ['solana-devnet']).map((wallet) => wallet.id)).toEqual(
-      ['trust', 'binance', 'phantom', 'walletconnect'],
+      ['trust', 'binance', 'walletconnect'],
     )
   })
 
