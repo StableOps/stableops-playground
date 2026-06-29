@@ -94,7 +94,7 @@ const zh = {
     manualConfirmed: '已确认手动转账；开始等待链上检测',
   },
   footer:
-    '本 playground 直接在浏览器里用你提供的 API Key 调 <code>@stableops/api-sdk</code>；第 2 步调用 <code>@stableops/wallet-sdk</code> 让浏览器钱包发送真实测试网交易；也可以不走钱包，从任意钱包/交易所向显示的地址转账后点击「我已手动转账」。订单进入 detected / confirmed / finalized 依赖 scanner 与 confirmations watcher。在 sandbox 下，若你的 org 还没有收款地址，会自动为本订单创建一个随机地址。请仅使用 sandbox key，切勿在浏览器中粘贴生产 key。<a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">在 GitLab 查看源码</a>。',
+    '本 playground 直接在浏览器里用你提供的 API Key 调 <code>@stableops/api-sdk</code>；第 2 步调用 <code>@stableops/wallet-sdk</code> 让浏览器钱包发送真实测试网交易；也可以不走钱包，从任意钱包/交易所向显示的地址转账后点击「我已手动转账」。订单进入 detected / confirmed / finalized 依赖 scanner 与 confirmations watcher。在 sandbox 下，若你的 org 还没有收款地址，会自动为本订单创建一个随机地址。请仅使用 sandbox key，切勿在浏览器中粘贴生产 key。<a href="https://github.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">在 GitLab 查看源码</a>。',
   checkout: {
     apiKey: 'API Key',
     apiKeyPlaceholder: '粘贴你的 sandbox API key（sk_sandbox_…）',
