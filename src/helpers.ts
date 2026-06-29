@@ -1,5 +1,5 @@
 import { StableOpsError } from '@stableops/api-sdk'
-import type { PaymentOrder, PaymentOrderInstruction } from '@stableops/api-sdk'
+import type { PaymentOrderInstruction } from '@stableops/api-sdk'
 import type {
   ChainId,
   EvmWalletChainId,
@@ -13,7 +13,6 @@ import type { PlaygroundWallet } from './wallets'
 // 与 playground.tsx 同样的"非样式"常量集中点;轮询周期、默认 API base 等运行参数全在这里。
 export const POLL_INTERVAL_MS = 5_000
 export const DEFAULT_BASE_URL = 'https://api.stableops.dev'
-const PLAYGROUND_HANDOFF_HASH_KEY = 'stableops-playground'
 
 // 用测试网目录把链 id 渲染成可读标签，找不到则回落到链 id 本身。
 export function chainLabel(options: readonly PlaygroundTestnet[], chain: string): string {
@@ -61,6 +60,7 @@ export function mergeWalletProviders(
 export type WalletConnectChainSelection = {
   evmChains: EvmWalletChainId[]
   solanaChains: Array<'solana' | 'solana-devnet'>
+  tronChains: Array<'tron' | 'tron-nile'>
   supportedChains: ChainId[]
 }
 
@@ -113,11 +113,12 @@ function isTronChainId(chain: WalletPaymentInstruction['chain']): chain is 'tron
 
 function walletConnectFamiliesForChains(
   chains: readonly WalletPaymentInstruction['chain'][],
-): Set<'evm' | 'solana'> {
-  const families = new Set<'evm' | 'solana'>()
+): Set<'evm' | 'solana' | 'tron'> {
+  const families = new Set<'evm' | 'solana' | 'tron'>()
   for (const chain of chains) {
     if (isEvmChainId(chain)) families.add('evm')
     if (isSolanaChainId(chain)) families.add('solana')
+    if (isTronChainId(chain)) families.add('tron')
   }
   return families
 }
@@ -131,67 +132,10 @@ export function filterWalletConnectWallets(
   return wallets.filter((wallet) => {
     if (wallet.families.includes('any')) return true
     return wallet.families.some(
-      (family) => (family === 'evm' || family === 'solana') && families.has(family),
+      (family) =>
+        (family === 'evm' || family === 'solana' || family === 'tron') && families.has(family),
     )
   })
-}
-
-export function filterWalletLinkWallets(
-  wallets: readonly PlaygroundWallet[],
-  chains: readonly WalletPaymentInstruction['chain'][],
-): PlaygroundWallet[] {
-  const hasTron = chains.some(isTronChainId)
-  if (!hasTron) return []
-  return wallets.filter((wallet) => wallet.families.includes('tron'))
-}
-
-export function buildTronWalletAppUrl(walletId: string, currentUrl: string): string | null {
-  switch (walletId) {
-    case 'tronlink':
-      return `tronlinkoutside://pull.activity?param=${encodeURIComponent(
-        JSON.stringify({ url: currentUrl, action: 'open' }),
-      )}`
-    case 'tokenpocket':
-      return `tpdapp://open?params=${encodeURIComponent(JSON.stringify({ url: currentUrl }))}`
-    case 'trust-tron':
-      return `https://link.trustwallet.com/open_url?coin_id=195&url=${encodeURIComponent(currentUrl)}`
-    case 'okx-tron':
-      return `okx://wallet/dapp/details?dappUrl=${encodeURIComponent(currentUrl)}`
-    default:
-      return null
-  }
-}
-
-export function buildTronWalletHandoffUrl(currentUrl: string, order: PaymentOrder): string {
-  const url = new URL(currentUrl)
-  const payload = encodeURIComponent(JSON.stringify(order))
-  url.hash = `${PLAYGROUND_HANDOFF_HASH_KEY}=${payload}`
-  return url.toString()
-}
-
-export function parseTronWalletHandoff(currentUrl: string): PaymentOrder | null {
-  try {
-    const url = new URL(currentUrl)
-    const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash
-    const params = new URLSearchParams(hash)
-    const raw = params.get(PLAYGROUND_HANDOFF_HASH_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(decodeURIComponent(raw)) as Partial<PaymentOrder>
-    if (
-      !parsed.id ||
-      !parsed.merchantOrderId ||
-      !parsed.amount ||
-      !parsed.requestedAmount ||
-      !parsed.status ||
-      !parsed.createdAt ||
-      !Array.isArray(parsed.paymentInstructions)
-    ) {
-      return null
-    }
-    return parsed as PaymentOrder
-  } catch {
-    return null
-  }
 }
 
 export function getWalletConnectChainSelection(
@@ -199,6 +143,7 @@ export function getWalletConnectChainSelection(
 ): WalletConnectChainSelection {
   const evmChains: EvmWalletChainId[] = []
   const solanaChains: Array<'solana' | 'solana-devnet'> = []
+  const tronChains: Array<'tron' | 'tron-nile'> = []
   const supportedChains: ChainId[] = []
   for (const chain of chains) {
     if (isEvmChainId(chain)) {
@@ -207,11 +152,15 @@ export function getWalletConnectChainSelection(
     } else if (isSolanaChainId(chain)) {
       solanaChains.push(chain)
       supportedChains.push(chain)
+    } else if (isTronChainId(chain)) {
+      tronChains.push(chain)
+      supportedChains.push(chain)
     }
   }
   return {
     evmChains,
     solanaChains,
+    tronChains,
     supportedChains,
   }
 }

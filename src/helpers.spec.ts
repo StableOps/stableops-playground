@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  buildTronWalletAppUrl,
-  buildTronWalletHandoffUrl,
   filterWalletConnectWallets,
-  filterWalletLinkWallets,
   getPaymentCandidateChains,
   getUnauthorizedWalletConnectChains,
   getWalletConnectChainSelection,
-  parseTronWalletHandoff,
   mergeWalletProviders,
 } from './helpers'
 import type { PlaygroundWallet } from './wallets'
@@ -58,13 +54,14 @@ describe('getUnauthorizedWalletConnectChains', () => {
 })
 
 describe('getWalletConnectChainSelection', () => {
-  it('splits EVM and Solana chains while excluding TRON WalletConnect payments', () => {
+  it('splits EVM, Solana and TRON chains for WalletConnect', () => {
     expect(
       getWalletConnectChainSelection(['base-sepolia', 'solana-devnet', 'tron-nile', 'base']),
     ).toEqual({
       evmChains: ['base-sepolia', 'base'],
       solanaChains: ['solana-devnet'],
-      supportedChains: ['base-sepolia', 'solana-devnet', 'base'],
+      tronChains: ['tron-nile'],
+      supportedChains: ['base-sepolia', 'solana-devnet', 'tron-nile', 'base'],
     })
   })
 })
@@ -107,86 +104,13 @@ describe('filterWalletConnectWallets', () => {
       ['metamask', 'trust', 'binance', 'walletconnect'],
     )
   })
-})
 
-describe('filterWalletLinkWallets', () => {
-  const wallets: PlaygroundWallet[] = [
-    { id: 'metamask', name: 'MetaMask', families: ['evm'] },
-    { id: 'tronlink', name: 'TronLink', families: ['tron'] },
-    { id: 'tokenpocket', name: 'TokenPocket', families: ['tron'] },
-    { id: 'trust-tron', name: 'Trust Wallet', families: ['tron'] },
-    { id: 'okx-tron', name: 'OKX Wallet', families: ['tron'] },
-  ]
-
-  it('shows TRON app-browser wallets for TRON-only orders', () => {
-    expect(filterWalletLinkWallets(wallets, ['tron-nile']).map((wallet) => wallet.id)).toEqual([
+  it('shows TRON-capable wallets for TRON orders (TRON now goes through WalletConnect)', () => {
+    expect(filterWalletConnectWallets(wallets, ['tron-nile']).map((wallet) => wallet.id)).toEqual([
       'tronlink',
       'tokenpocket',
-      'trust-tron',
       'okx-tron',
+      'walletconnect',
     ])
-  })
-
-  it('does not show app-browser wallets for EVM or Solana orders', () => {
-    expect(filterWalletLinkWallets(wallets, ['base-sepolia', 'solana-devnet'])).toEqual([])
-  })
-})
-
-describe('buildTronWalletAppUrl', () => {
-  it('builds configured app-browser links with the current page URL encoded', () => {
-    const currentUrl = 'https://stableops.dev/zh/docs/playground?order=abc&chain=tron-nile'
-
-    expect(buildTronWalletAppUrl('tronlink', currentUrl)).toBe(
-      `tronlinkoutside://pull.activity?param=${encodeURIComponent(
-        JSON.stringify({ url: currentUrl, action: 'open' }),
-      )}`,
-    )
-    expect(buildTronWalletAppUrl('tokenpocket', currentUrl)).toBe(
-      `tpdapp://open?params=${encodeURIComponent(JSON.stringify({ url: currentUrl }))}`,
-    )
-    expect(buildTronWalletAppUrl('trust-tron', currentUrl)).toBe(
-      `https://link.trustwallet.com/open_url?coin_id=195&url=${encodeURIComponent(currentUrl)}`,
-    )
-    expect(buildTronWalletAppUrl('okx-tron', currentUrl)).toBe(
-      `okx://wallet/dapp/details?dappUrl=${encodeURIComponent(currentUrl)}`,
-    )
-    expect(buildTronWalletAppUrl('metamask', currentUrl)).toBeNull()
-  })
-})
-
-describe('TRON wallet handoff URL', () => {
-  it('encodes and parses the non-sensitive order payload in the URL hash', () => {
-    const handoff = {
-      id: 'po_123',
-      merchantOrderId: 'playground_123',
-      amount: '0.01',
-      requestedAmount: '0.01',
-      settlementAsset: 'USDT' as const,
-      status: 'created' as const,
-      expiresAt: '2026-01-01T00:00:00.000Z',
-      metadata: null,
-      createdAt: '2026-01-01T00:00:00.000Z',
-      acceptedAssets: [{ chain: 'tron-nile' as const, asset: 'USDT' as const }],
-      paymentInstructions: [
-        {
-          chain: 'tron-nile' as const,
-          asset: 'USDT' as const,
-          address: 'TQjcL8mfCfAqLQzXWw5nP9jJmkJ3uH5r6R',
-        },
-      ],
-    }
-    const url = buildTronWalletHandoffUrl('https://stableops.dev/zh/docs/playground?x=1#old', handoff)
-
-    expect(url.startsWith('https://stableops.dev/zh/docs/playground?x=1#stableops-playground=')).toBe(
-      true,
-    )
-    expect(parseTronWalletHandoff(url)).toEqual(handoff)
-  })
-
-  it('returns null for missing or invalid handoff payloads', () => {
-    expect(parseTronWalletHandoff('https://stableops.dev/zh/docs/playground')).toBeNull()
-    expect(
-      parseTronWalletHandoff('https://stableops.dev/zh/docs/playground#stableops-playground=bad'),
-    ).toBeNull()
   })
 })

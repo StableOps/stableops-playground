@@ -20,10 +20,13 @@ export type PlaygroundWallet = WalletConnectWalletOption & {
   // 无官方 logo（iconUrl）时的兜底：品牌底色块 + 内联标志。
   brand?: string
   Glyph?: () => ReactNode
+  // 通用「任意钱包」入口（非具体钱包）：弹窗对其展示「用任意支持 WalletConnect 的钱包扫码」。
+  anyWallet?: boolean
 }
 
-// 主流 EVM 钱包目录。前若干个挂官方 logo + 移动端深链；末位 WalletConnect 作为「任意钱包扫码」
-// 的兜底入口（无深链，只出二维码）。
+// 钱包目录：除末位 WalletConnect 兜底入口外，按全球市场份额（活跃用户量级）从高到低排序。
+// 前若干个挂官方 logo + 移动端深链；TokenPocket（多链：EVM/Solana/TRON）与 TronLink（TRON 为主）
+// 的 WC 原生深链 scheme 无可靠官方文档，故省略 links，仅以二维码兜底。
 export const WALLETCONNECT_WALLETS: PlaygroundWallet[] = [
   {
     id: 'metamask',
@@ -38,7 +41,7 @@ export const WALLETCONNECT_WALLETS: PlaygroundWallet[] = [
   {
     id: 'trust',
     name: 'Trust Wallet',
-    families: ['evm', 'solana'],
+    families: ['evm', 'solana', 'tron'],
     iconUrl: WALLET_LOGOS.trust,
     links: {
       native: 'trust://wc?uri=',
@@ -56,19 +59,9 @@ export const WALLETCONNECT_WALLETS: PlaygroundWallet[] = [
     },
   },
   {
-    id: 'rainbow',
-    name: 'Rainbow',
-    families: ['evm'],
-    iconUrl: WALLET_LOGOS.rainbow,
-    links: {
-      native: 'rainbow://wc?uri=',
-      universal: 'https://rnbwapp.com/wc?uri=',
-    },
-  },
-  {
     id: 'okx',
     name: 'OKX Wallet',
-    families: ['evm', 'solana'],
+    families: ['evm', 'solana', 'tron'],
     iconUrl: WALLET_LOGOS.okx,
     // OKX 的 universal link 非 wc 处理器，省略；保留原生 scheme。
     links: {
@@ -83,6 +76,30 @@ export const WALLETCONNECT_WALLETS: PlaygroundWallet[] = [
     links: {
       native: 'bnc://app.binance.com/cedefi/wc?uri=',
       universal: 'https://app.binance.com/cedefi/wc?uri=',
+    },
+  },
+  {
+    id: 'tokenpocket',
+    name: 'TokenPocket',
+    families: ['evm', 'solana', 'tron'],
+    brand: '#2980FE',
+    iconUrl: WALLET_LOGOS.tokenpocket,
+  },
+  {
+    id: 'tronlink',
+    name: 'TronLink',
+    families: ['tron'],
+    brand: '#EF0027',
+    iconUrl: WALLET_LOGOS.tronlink,
+  },
+  {
+    id: 'rainbow',
+    name: 'Rainbow',
+    families: ['evm'],
+    iconUrl: WALLET_LOGOS.rainbow,
+    links: {
+      native: 'rainbow://wc?uri=',
+      universal: 'https://rnbwapp.com/wc?uri=',
     },
   },
   {
@@ -109,39 +126,9 @@ export const WALLETCONNECT_WALLETS: PlaygroundWallet[] = [
     id: 'walletconnect',
     name: 'WalletConnect',
     families: ['any'],
+    anyWallet: true,
     brand: '#3B99FC',
     iconUrl: WALLET_LOGOS.walletconnect,
     // 兜底入口：任意支持 WalletConnect 的钱包扫码即可，不走深链。
-  },
-]
-
-// TRON 不走 WalletConnect。这里复用同一个手机钱包弹窗样式，点击后打开钱包 App 内置浏览器，
-// 页面在 App 内可获得注入的 TronLink/tronWeb provider，再由现有「浏览器钱包」按钮发起支付。
-export const TRON_APP_WALLETS: PlaygroundWallet[] = [
-  {
-    id: 'tronlink',
-    name: 'TronLink',
-    families: ['tron'],
-    brand: '#EF0027',
-    iconUrl: WALLET_LOGOS.tronlink,
-  },
-  {
-    id: 'tokenpocket',
-    name: 'TokenPocket',
-    families: ['tron'],
-    brand: '#2980FE',
-    iconUrl: WALLET_LOGOS.tokenpocket,
-  },
-  {
-    id: 'trust-tron',
-    name: 'Trust Wallet',
-    families: ['tron'],
-    iconUrl: WALLET_LOGOS.trust,
-  },
-  {
-    id: 'okx-tron',
-    name: 'OKX Wallet',
-    families: ['tron'],
-    iconUrl: WALLET_LOGOS.okx,
   },
 ]
