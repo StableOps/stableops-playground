@@ -61,7 +61,7 @@ export const WALLETCONNECT_WALLETS: PlaygroundWallet[] = [
   {
     id: 'okx',
     name: 'OKX Wallet',
-    families: ['evm', 'solana', 'tron'],
+    families: ['evm', 'solana'],
     iconUrl: WALLET_LOGOS.okx,
     // OKX 的 universal link 非 wc 处理器，省略；保留原生 scheme。
     links: {
