@@ -14,6 +14,7 @@ import { Button, cn, Input, Label, MultiSelect } from './ui'
 import { CopyButton, StatusBadge, type Step } from './ui-bits'
 import { WALLETCONNECT_WALLETS, type PlaygroundWallet } from './wallets'
 import { WalletConnectDialog, type WalletConnectDialogError } from './walletconnect-dialog'
+import { TokenIcon } from '@stableops/wallet-ui'
 import {
   DEFAULT_BASE_URL,
   chainLabel,
@@ -610,7 +611,7 @@ export function Playground({
             <button
               type="button"
               onClick={() => setSelectedPay(null)}
-              className={`cursor-pointer rounded-full border px-2 py-0.5 transition ${
+              className={`cursor-pointer rounded-full border px-2 py-0.5 font-mono transition ${
                 selectedPay === null
                   ? 'border-primary bg-primary/10 text-primary'
                   : 'border-border text-muted-foreground hover:text-foreground'
@@ -627,12 +628,13 @@ export function Playground({
                   onClick={() =>
                     setSelectedPay({ chain: instruction.chain, asset: instruction.asset })
                   }
-                  className={`cursor-pointer rounded-full border px-2 py-0.5 font-mono transition ${
+                  className={`cursor-pointer flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono transition ${
                     active
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground hover:text-foreground'
                   }`}>
-                  {chainNetworkLabel(chainOptions, instruction.chain)} · {instruction.asset}
+                  <TokenIcon symbol={instruction.asset} size={13} />
+                  <span>{chainNetworkLabel(chainOptions, instruction.chain)}</span>
                 </button>
               )
             })}
@@ -646,8 +648,7 @@ export function Playground({
           {order.paymentInstructions.map((instruction) => (
             <div
               key={`${instruction.chain}:${instruction.asset}:${instruction.address}`}
-              className="space-y-1.5"
-            >
+              className="space-y-1.5">
               <div className="text-xs text-muted-foreground">
                 {LL.manual.sendTo({
                   amount: order.amount,
