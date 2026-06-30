@@ -62,8 +62,8 @@ const zh = {
     prefix: '真实钱包交易，使用所选测试网；不要用主网资金。领测试币：',
   },
   dropped: {
-    nonEvmOnly: 'TRON 和 Solana 只有付费套餐才可用，请选择 EVM 链。',
-    nonEvmMix: '以下链仅付费套餐可用，请取消选择：{chains}',
+    unallocated:
+      '以下链未能分配到收款地址：{chains}。请确认套餐已支持这些链，且已配置收款地址（或已开启「自动导入」）。',
     fallback: '请开启「自动导入」或前往控制台配置收款地址。',
   },
   status: {
@@ -116,8 +116,8 @@ const zh = {
       '开启时会在创建会话前为本订单导入一个确定性 burner 地址，适合 org 还没有任何收款地址的场景。若只想使用自己管理的地址，请关闭。',
     noAddressHint:
       '提示：如果创建失败是因为 org 没有收款地址，请打开上方的「自动导入」，或前往 Dashboard → 收款地址 新建。',
-    droppedNonEvmOnly: 'TRON 和 Solana 只有付费套餐才可用，请选择 EVM 链。',
-    droppedNonEvmMix: '以下链仅付费套餐可用，请取消选择：{chains}',
+    droppedUnallocated:
+      '以下链未能分配到收款地址：{chains}。请确认套餐已支持这些链，且已配置收款地址（或已开启「自动导入」）。',
     droppedFallback: '请开启「自动导入」或前往控制台配置收款地址。',
     create: '创建并打开收银台',
     newOrderId: '换一个订单号',

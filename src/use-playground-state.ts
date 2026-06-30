@@ -47,7 +47,10 @@ export type UsePlaygroundState = {
   log: string[]
   busy: string | null
   createOrder: () => Promise<void>
-  payWithWallet: (providers?: WalletProviderByChain, preferredChain?: ChainId) => Promise<boolean>
+  payWithWallet: (
+    providers?: WalletProviderByChain,
+    preferred?: { chain: ChainId; asset: string },
+  ) => Promise<boolean>
   markManualTransfer: () => Promise<void>
   waitForOrderStatus: (target: WaitTarget, index: number) => Promise<boolean>
   reset: () => void
@@ -273,26 +276,15 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         { idempotencyKey: merchantOrderId },
       )
       // 先检测被静默丢弃的链（无可用收款地址），失败则不 setOrder 阻断后续。
+      // 不臆测原因（套餐 / 地址池），统一给中性提示，避免对付费套餐误报「仅付费套餐可用」。
       const allocatedChains = new Set(created.paymentInstructions.map((pi) => pi.chain))
       const dropped = selectedOptions.filter((opt) => !allocatedChains.has(opt.chain))
       if (dropped.length > 0) {
-        const nonEvm = dropped.filter((opt) => opt.family !== 'evm')
-        const hasEvmAllocated = selectedOptions.some(
-          (opt) => opt.family === 'evm' && allocatedChains.has(opt.chain),
-        )
-        if (nonEvm.length === dropped.length && !hasEvmAllocated) {
-          updateStep(0, { status: 'error', detail: LL.dropped.nonEvmOnly() })
-          append(LL.dropped.nonEvmOnly())
-        } else if (nonEvm.length > 0 && hasEvmAllocated) {
-          const detail = LL.dropped.nonEvmMix({
-            chains: nonEvm.map((o) => o.label).join(LL.sep()),
-          })
-          updateStep(0, { status: 'error', detail })
-          append(detail)
-        } else {
-          updateStep(0, { status: 'error', detail: LL.dropped.fallback() })
-          append(LL.dropped.fallback())
-        }
+        const detail = LL.dropped.unallocated({
+          chains: dropped.map((o) => o.label).join(LL.sep()),
+        })
+        updateStep(0, { status: 'error', detail })
+        append(detail)
         return
       }
       setOrder(created)
@@ -316,21 +308,11 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         updateStep(0, { status: 'error', detail: message })
         append(LL.log.createFailed({ error: message }))
       } else if (/no available address/i.test(message)) {
-        const nonEvm = selectedOptions.filter((o) => o.family !== 'evm')
-        const hasEvm = selectedOptions.some((o) => o.family === 'evm')
-        if (nonEvm.length === selectedOptions.length) {
-          append(LL.dropped.nonEvmOnly())
-          updateStep(0, { status: 'error', detail: LL.dropped.nonEvmOnly() })
-        } else if (nonEvm.length > 0 && hasEvm) {
-          const detail = LL.dropped.nonEvmMix({
-            chains: nonEvm.map((o) => o.label).join(LL.sep()),
-          })
-          append(detail)
-          updateStep(0, { status: 'error', detail })
-        } else {
-          append(LL.dropped.fallback())
-          updateStep(0, { status: 'error', detail: LL.dropped.fallback() })
-        }
+        const detail = LL.dropped.unallocated({
+          chains: selectedOptions.map((o) => o.label).join(LL.sep()),
+        })
+        append(detail)
+        updateStep(0, { status: 'error', detail })
       } else {
         updateStep(0, { status: 'error', detail: message })
         append(LL.log.createFailed({ error: message }))
@@ -354,10 +336,18 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
   ])
 
   const payWithWallet = useCallback(
-    async (extraProviders: WalletProviderByChain = {}, preferredChain?: ChainId) => {
+    async (
+      extraProviders: WalletProviderByChain = {},
+      preferred?: { chain: ChainId; asset: string },
+    ) => {
       if (!order) return false
 
-      const walletInstructions = order.paymentInstructions.map(toWalletInstruction)
+      const allInstructions = order.paymentInstructions.map(toWalletInstruction)
+      // 精确到 (chain, asset)：选了某个支付项时只保留该条，让钱包付选定的币；
+      // 同一条链可接受多种币（共享同一收款地址），不过滤会默认付到首个币。
+      const walletInstructions = preferred
+        ? allInstructions.filter((i) => i.chain === preferred.chain && i.asset === preferred.asset)
+        : allInstructions
       const providers = mergeWalletProviders(getInjectedWalletProviders(), extraProviders)
 
       let selected: ReturnType<typeof selectWalletPaymentInstruction>
@@ -365,7 +355,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         selected = selectWalletPaymentInstruction(
           walletInstructions,
           providers,
-          preferredChain ? [preferredChain] : [],
+          preferred ? [preferred.chain] : [],
         )
       } catch {
         updateStep(1, {

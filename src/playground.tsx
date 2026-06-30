@@ -1,6 +1,6 @@
 'use client'
 
-import { StableOps, type ChainId } from '@stableops/api-sdk'
+import { StableOps, type ChainId, type Asset } from '@stableops/api-sdk'
 import {
   createWalletConnectController,
   setWalletSdkDebug,
@@ -17,6 +17,7 @@ import { WalletConnectDialog, type WalletConnectDialogError } from './walletconn
 import {
   DEFAULT_BASE_URL,
   chainLabel,
+  chainNetworkLabel,
   filterWalletConnectWallets,
   getPaymentCandidateChains,
   getUnauthorizedWalletConnectChains,
@@ -121,7 +122,9 @@ export function Playground({
   // 自动导入 sandbox 收款地址：默认开启；关闭时改用 org 已有地址，并在 UI / 失败日志里提示如何补救。
   const [autoImportAddress, setAutoImportAddress] = useState(true)
   const [amountMode, setAmountMode] = useState<'exact' | 'auto'>('auto')
-  const [selectedPayChain, setSelectedPayChain] = useState<ChainId | null>(null)
+  // 支付项精确到 (链, 资产)：同一条链可接受多种币（共享同一收款地址），选择器逐项列出，
+  // 钱包支付按选定的 (链, 资产) 付。
+  const [selectedPay, setSelectedPay] = useState<{ chain: ChainId; asset: Asset } | null>(null)
   const [walletConnectOpen, setWalletConnectOpen] = useState(false)
   const [walletConnectHidden, setWalletConnectHidden] = useState(false)
   const [walletConnectController, setWalletConnectController] =
@@ -190,16 +193,22 @@ export function Playground({
     return Array.from(new Set(order.paymentInstructions.map((pi) => pi.chain)))
   }, [order])
   const mobileWalletCandidateChains = useMemo(
-    () => getPaymentCandidateChains(payChainOptions, selectedPayChain),
-    [payChainOptions, selectedPayChain],
+    () => getPaymentCandidateChains(payChainOptions, selectedPay?.chain ?? null),
+    [payChainOptions, selectedPay],
   )
 
-  // 订单变化时，若当前支付网络选择不在新订单的可用链中，回退自动。
+  // 订单变化时，若当前支付项不在新订单的指令中，回退自动。
   useEffect(() => {
-    if (selectedPayChain && order && !payChainOptions.includes(selectedPayChain)) {
-      setSelectedPayChain(null)
+    if (
+      selectedPay &&
+      order &&
+      !order.paymentInstructions.some(
+        (pi) => pi.chain === selectedPay.chain && pi.asset === selectedPay.asset,
+      )
+    ) {
+      setSelectedPay(null)
     }
-  }, [order, payChainOptions, selectedPayChain])
+  }, [order, selectedPay])
 
   const walletConnectChainSelection = useMemo(() => {
     if (!order) return { evmChains: [], solanaChains: [], tronChains: [], supportedChains: [] }
@@ -369,7 +378,7 @@ export function Playground({
             )
             return
           }
-          const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)
+          const paid = await payWithWallet(controller.providers, selectedPay ?? undefined)
           if (paid) setWalletConnectOpen(false)
           return
         } catch (err) {
@@ -397,7 +406,7 @@ export function Playground({
       LL,
       order,
       payWithWallet,
-      selectedPayChain,
+      selectedPay,
       walletConnectChainSelection,
       walletConnectProjectId,
       walletConnectController,
@@ -408,9 +417,9 @@ export function Playground({
     const controller = walletConnectController
     if (!controller) return
     setWalletConnectError(null)
-    const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)
+    const paid = await payWithWallet(controller.providers, selectedPay ?? undefined)
     if (paid) setWalletConnectOpen(false)
-  }, [payWithWallet, selectedPayChain, walletConnectController])
+  }, [payWithWallet, selectedPay, walletConnectController])
 
   return (
     <div className={cn('not-prose my-6 space-y-5', className)}>
@@ -513,8 +522,7 @@ export function Playground({
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => void payWithWallet(undefined, selectedPayChain ?? undefined)}
-
+            onClick={() => void payWithWallet(undefined, selectedPay ?? undefined)}
             disabled={!order || busy === 'create' || busy === 'pay' || steps[1].status === 'done'}>
             {busy === 'pay' ? LL.actions.paying() : LL.actions.pay()}
           </Button>
@@ -601,27 +609,33 @@ export function Playground({
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <button
               type="button"
-              onClick={() => setSelectedPayChain(null)}
+              onClick={() => setSelectedPay(null)}
               className={`cursor-pointer rounded-full border px-2 py-0.5 transition ${
-                selectedPayChain === null
+                selectedPay === null
                   ? 'border-primary bg-primary/10 text-primary'
                   : 'border-border text-muted-foreground hover:text-foreground'
               }`}>
               {LL.network.auto()}
             </button>
-            {payChainOptions.map((chain) => (
-              <button
-                key={chain}
-                type="button"
-                onClick={() => setSelectedPayChain(chain)}
-                className={`cursor-pointer rounded-full border px-2 py-0.5 font-mono transition ${
-                  selectedPayChain === chain
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:text-foreground'
-                }`}>
-                {chainLabel(chainOptions, chain)}
-              </button>
-            ))}
+            {order.paymentInstructions.map((instruction) => {
+              const active =
+                selectedPay?.chain === instruction.chain && selectedPay?.asset === instruction.asset
+              return (
+                <button
+                  key={`${instruction.chain}:${instruction.asset}`}
+                  type="button"
+                  onClick={() =>
+                    setSelectedPay({ chain: instruction.chain, asset: instruction.asset })
+                  }
+                  className={`cursor-pointer rounded-full border px-2 py-0.5 font-mono transition ${
+                    active
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:text-foreground'
+                  }`}>
+                  {chainNetworkLabel(chainOptions, instruction.chain)} · {instruction.asset}
+                </button>
+              )
+            })}
           </div>
         </div>
       ) : null}
@@ -630,12 +644,15 @@ export function Playground({
         <div className="space-y-3 rounded-lg border bg-background/50 p-4">
           <div className="text-sm font-medium">{LL.manual.heading()}</div>
           {order.paymentInstructions.map((instruction) => (
-            <div key={`${instruction.chain}:${instruction.address}`} className="space-y-1.5">
+            <div
+              key={`${instruction.chain}:${instruction.asset}:${instruction.address}`}
+              className="space-y-1.5"
+            >
               <div className="text-xs text-muted-foreground">
                 {LL.manual.sendTo({
                   amount: order.amount,
                   asset: instruction.asset,
-                  chain: chainLabel(chainOptions, instruction.chain),
+                  chain: chainNetworkLabel(chainOptions, instruction.chain),
                 })}
               </div>
               <div className="flex items-center gap-2">

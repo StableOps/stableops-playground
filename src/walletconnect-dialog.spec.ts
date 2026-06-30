@@ -83,7 +83,7 @@ describe('WalletConnectDialog shared UI adapter', () => {
     const connectSource = source.slice(connectStart, renderStart)
 
     expect(connectSource).not.toContain('setWalletConnectHidden(true)')
-    expect(connectSource).toContain('const paid = await payWithWallet(controller.providers, selectedPayChain ?? undefined)')
+    expect(connectSource).toContain('const paid = await payWithWallet(controller.providers, selectedPay ?? undefined)')
     expect(connectSource).toContain('if (paid) setWalletConnectOpen(false)')
     expect(source).toContain('onRetryPayment={() => void retryWalletConnectPayment()}')
   })
