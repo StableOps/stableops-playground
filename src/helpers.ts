@@ -19,6 +19,14 @@ export function chainLabel(options: readonly PlaygroundTestnet[], chain: string)
   return options.find((option) => option.chain === chain)?.label ?? chain
 }
 
+// 纯网络名（去掉 label 里的 " · 资产 (testnet)" 后缀），用于"按链"展示时不焊死某个资产。
+// 同一条链可能接受多个资产（如 BNB 的 USDC/USDT），用本函数 + 单独的 asset 拼接才不会错配。
+export function chainNetworkLabel(options: readonly PlaygroundTestnet[], chain: string): string {
+  const label = options.find((option) => option.chain === chain)?.label
+  if (!label) return chain
+  return label.split(' · ')[0] ?? label
+}
+
 // 用测试网目录里的 explorerUrl 基址，按链家族拼出交易详情页链接（各家族路径不同）。
 // 思路同 apps/checkout 的 explorerTxUrl；但 playground 自包含、不依赖私有包 @stableops/shared,
 // 因此直接复用 testnets.ts 里已声明的 explorerUrl。未知链优雅降级（返回 null,不渲染链接）。

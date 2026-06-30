@@ -38,11 +38,6 @@ const acceptedAssetOptions = [
   { label: 'TRON Nile · USDT', chain: 'tron-nile', asset: 'USDT' },
 ] as const
 
-const NON_EVM_CHAINS = new Set(['solana-devnet', 'tron-nile'])
-function isNonEvmChain(chain: string): boolean {
-  return NON_EVM_CHAINS.has(chain)
-}
-
 function buildDefaultMerchantOrderId() {
   return `checkout_demo_${Date.now().toString(36)}`
 }
@@ -179,19 +174,9 @@ export function Checkout({
         .map((asset) => asset.chain)
         .filter((chain) => !allocatedChains.has(chain))
       if (droppedChains.length > 0) {
-        const nonEvmDropped = droppedChains.filter(isNonEvmChain)
-        const hasEvmAllocated = selectedAssets.some(
-          (asset) => !isNonEvmChain(asset.chain) && allocatedChains.has(asset.chain),
-        )
-
-        if (nonEvmDropped.length === droppedChains.length && !hasEvmAllocated) {
-          setError(copy.droppedNonEvmOnly())
-        } else if (nonEvmDropped.length > 0 && hasEvmAllocated) {
-          const sep = locale === 'zh' ? '、' : ', '
-          setError(copy.droppedNonEvmMix({ chains: nonEvmDropped.join(sep) }))
-        } else {
-          setError(copy.droppedFallback())
-        }
+        // 不臆测原因（套餐 / 地址池），统一给中性提示，避免对付费套餐误报「仅付费套餐可用」。
+        const sep = locale === 'zh' ? '、' : ', '
+        setError(copy.droppedUnallocated({ chains: droppedChains.join(sep) }))
         return
       }
       const query = new URLSearchParams({
@@ -204,16 +189,8 @@ export function Checkout({
     } catch (err) {
       const base = err instanceof Error ? err.message : copy.unknownError()
       if (/no available address/i.test(base)) {
-        const nonEvmSelected = selectedAssets.filter((a) => isNonEvmChain(a.chain))
-        const hasEvmSelected = selectedAssets.some((a) => !isNonEvmChain(a.chain))
-        if (nonEvmSelected.length === selectedAssets.length) {
-          setError(copy.droppedNonEvmOnly())
-        } else if (nonEvmSelected.length > 0 && hasEvmSelected) {
-          const sep = locale === 'zh' ? '、' : ', '
-          setError(copy.droppedNonEvmMix({ chains: nonEvmSelected.map((a) => a.chain).join(sep) }))
-        } else {
-          setError(copy.droppedFallback())
-        }
+        const sep = locale === 'zh' ? '、' : ', '
+        setError(copy.droppedUnallocated({ chains: selectedAssets.map((a) => a.chain).join(sep) }))
       } else {
         setError(autoImportAddress ? base : `${base}\n${copy.noAddressHint()}`)
       }

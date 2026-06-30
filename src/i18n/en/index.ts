@@ -64,8 +64,8 @@ const en = {
       'Real wallet transaction on the selected testnet(s) — do not use mainnet funds. Get test funds: ',
   },
   dropped: {
-    nonEvmOnly: 'TRON and Solana are only available on paid plans. Please select EVM chains.',
-    nonEvmMix: 'The following chains are only available on paid plans. Please deselect: {chains}',
+    unallocated:
+      'No receiving address could be assigned for: {chains}. Make sure your plan supports these chains and that addresses are configured (or Auto-import is on).',
     fallback: 'Enable Auto-import or configure receiving addresses in the Dashboard.',
   },
   status: {
@@ -120,10 +120,8 @@ const en = {
       'When on, a deterministic burner sandbox address is imported for this order before the session is created. Useful when your org has no addresses yet. Turn it off to use only the addresses you manage yourself.',
     noAddressHint:
       'tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.',
-    droppedNonEvmOnly:
-      'TRON and Solana are only available on paid plans. Please select EVM chains.',
-    droppedNonEvmMix:
-      'The following chains are only available on paid plans. Please deselect: {chains}',
+    droppedUnallocated:
+      'No receiving address could be assigned for: {chains}. Make sure your plan supports these chains and that addresses are configured (or Auto-import is on).',
     droppedFallback: 'Enable Auto-import or configure receiving addresses in the Dashboard.',
     create: 'Create and open Checkout',
     newOrderId: 'New merchant order ID',

@@ -194,14 +194,10 @@ type RootTranslation = {
 	}
 	dropped: {
 		/**
-		 * T​R​O​N​ ​a​n​d​ ​S​o​l​a​n​a​ ​a​r​e​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​p​a​i​d​ ​p​l​a​n​s​.​ ​P​l​e​a​s​e​ ​s​e​l​e​c​t​ ​E​V​M​ ​c​h​a​i​n​s​.
-		 */
-		nonEvmOnly: string
-		/**
-		 * T​h​e​ ​f​o​l​l​o​w​i​n​g​ ​c​h​a​i​n​s​ ​a​r​e​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​p​a​i​d​ ​p​l​a​n​s​.​ ​P​l​e​a​s​e​ ​d​e​s​e​l​e​c​t​:​ ​{​c​h​a​i​n​s​}
+		 * N​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​ ​c​o​u​l​d​ ​b​e​ ​a​s​s​i​g​n​e​d​ ​f​o​r​:​ ​{​c​h​a​i​n​s​}​.​ ​M​a​k​e​ ​s​u​r​e​ ​y​o​u​r​ ​p​l​a​n​ ​s​u​p​p​o​r​t​s​ ​t​h​e​s​e​ ​c​h​a​i​n​s​ ​a​n​d​ ​t​h​a​t​ ​a​d​d​r​e​s​s​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​ ​(​o​r​ ​A​u​t​o​-​i​m​p​o​r​t​ ​i​s​ ​o​n​)​.
 		 * @param {unknown} chains
 		 */
-		nonEvmMix: RequiredParams<'chains'>
+		unallocated: RequiredParams<'chains'>
 		/**
 		 * E​n​a​b​l​e​ ​A​u​t​o​-​i​m​p​o​r​t​ ​o​r​ ​c​o​n​f​i​g​u​r​e​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​e​s​ ​i​n​ ​t​h​e​ ​D​a​s​h​b​o​a​r​d​.
 		 */
@@ -323,7 +319,7 @@ type RootTranslation = {
 		manualConfirmed: string
 	}
 	/**
-	 * T​h​i​s​ ​p​l​a​y​g​r​o​u​n​d​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​a​p​i​-​s​d​k​<​/​c​o​d​e​>​ ​d​i​r​e​c​t​l​y​ ​f​r​o​m​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​w​i​t​h​ ​t​h​e​ ​A​P​I​ ​k​e​y​ ​y​o​u​ ​p​r​o​v​i​d​e​.​ ​S​t​e​p​ ​2​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​w​a​l​l​e​t​-​s​d​k​<​/​c​o​d​e​>​ ​t​o​ ​a​s​k​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​w​a​l​l​e​t​ ​t​o​ ​s​e​n​d​ ​a​ ​r​e​a​l​ ​t​e​s​t​n​e​t​ ​t​r​a​n​s​a​c​t​i​o​n​ ​—​ ​o​r​ ​y​o​u​ ​c​a​n​ ​s​k​i​p​ ​t​h​e​ ​w​a​l​l​e​t​,​ ​t​r​a​n​s​f​e​r​ ​t​o​ ​t​h​e​ ​s​h​o​w​n​ ​a​d​d​r​e​s​s​ ​f​r​o​m​ ​a​n​y​ ​w​a​l​l​e​t​/​e​x​c​h​a​n​g​e​,​ ​a​n​d​ ​c​l​i​c​k​ ​"​I​'​v​e​ ​s​e​n​t​ ​i​t​ ​m​a​n​u​a​l​l​y​"​.​ ​O​r​d​e​r​s​ ​a​d​v​a​n​c​e​ ​t​o​ ​d​e​t​e​c​t​e​d​ ​/​ ​c​o​n​f​i​r​m​e​d​ ​/​ ​f​i​n​a​l​i​z​e​d​ ​v​i​a​ ​t​h​e​ ​s​c​a​n​n​e​r​ ​a​n​d​ ​c​o​n​f​i​r​m​a​t​i​o​n​s​ ​w​a​t​c​h​e​r​.​ ​I​n​ ​s​a​n​d​b​o​x​ ​(​t​e​s​t​n​e​t​)​,​ ​i​f​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​ ​y​e​t​,​ ​o​n​e​ ​i​s​ ​a​u​t​o​-​c​r​e​a​t​e​d​ ​f​o​r​ ​t​h​i​s​ ​o​r​d​e​r​.​ ​U​s​e​ ​a​ ​s​a​n​d​b​o​x​ ​k​e​y​ ​o​n​l​y​ ​—​ ​n​e​v​e​r​ ​p​a​s​t​e​ ​a​ ​l​i​v​e​ ​k​e​y​ ​i​n​t​o​ ​a​ ​b​r​o​w​s​e​r​.​ ​<​a​ ​h​r​e​f​=​"​h​t​t​p​s​:​/​/​g​i​t​l​a​b​.​c​o​m​/​S​t​a​b​l​e​O​p​s​/​s​t​a​b​l​e​o​p​s​-​p​l​a​y​g​r​o​u​n​d​"​ ​t​a​r​g​e​t​=​"​_​b​l​a​n​k​"​ ​r​e​l​=​"​n​o​r​e​f​e​r​r​e​r​"​ ​c​l​a​s​s​=​"​u​n​d​e​r​l​i​n​e​ ​u​n​d​e​r​l​i​n​e​-​o​f​f​s​e​t​-​2​"​>​V​i​e​w​ ​s​o​u​r​c​e​ ​o​n​ ​G​i​t​L​a​b​<​/​a​>​.
+	 * T​h​i​s​ ​p​l​a​y​g​r​o​u​n​d​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​a​p​i​-​s​d​k​<​/​c​o​d​e​>​ ​d​i​r​e​c​t​l​y​ ​f​r​o​m​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​w​i​t​h​ ​t​h​e​ ​A​P​I​ ​k​e​y​ ​y​o​u​ ​p​r​o​v​i​d​e​.​ ​S​t​e​p​ ​2​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​w​a​l​l​e​t​-​s​d​k​<​/​c​o​d​e​>​ ​t​o​ ​a​s​k​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​w​a​l​l​e​t​ ​t​o​ ​s​e​n​d​ ​a​ ​r​e​a​l​ ​t​e​s​t​n​e​t​ ​t​r​a​n​s​a​c​t​i​o​n​ ​—​ ​o​r​ ​y​o​u​ ​c​a​n​ ​s​k​i​p​ ​t​h​e​ ​w​a​l​l​e​t​,​ ​t​r​a​n​s​f​e​r​ ​t​o​ ​t​h​e​ ​s​h​o​w​n​ ​a​d​d​r​e​s​s​ ​f​r​o​m​ ​a​n​y​ ​w​a​l​l​e​t​/​e​x​c​h​a​n​g​e​,​ ​a​n​d​ ​c​l​i​c​k​ ​"​I​'​v​e​ ​s​e​n​t​ ​i​t​ ​m​a​n​u​a​l​l​y​"​.​ ​O​r​d​e​r​s​ ​a​d​v​a​n​c​e​ ​t​o​ ​d​e​t​e​c​t​e​d​ ​/​ ​c​o​n​f​i​r​m​e​d​ ​/​ ​f​i​n​a​l​i​z​e​d​ ​v​i​a​ ​t​h​e​ ​s​c​a​n​n​e​r​ ​a​n​d​ ​c​o​n​f​i​r​m​a​t​i​o​n​s​ ​w​a​t​c​h​e​r​.​ ​I​n​ ​s​a​n​d​b​o​x​ ​(​t​e​s​t​n​e​t​)​,​ ​i​f​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​ ​y​e​t​,​ ​o​n​e​ ​i​s​ ​a​u​t​o​-​c​r​e​a​t​e​d​ ​f​o​r​ ​t​h​i​s​ ​o​r​d​e​r​.​ ​U​s​e​ ​a​ ​s​a​n​d​b​o​x​ ​k​e​y​ ​o​n​l​y​ ​—​ ​n​e​v​e​r​ ​p​a​s​t​e​ ​a​ ​l​i​v​e​ ​k​e​y​ ​i​n​t​o​ ​a​ ​b​r​o​w​s​e​r​.​ ​<​a​ ​h​r​e​f​=​"​h​t​t​p​s​:​/​/​g​i​t​h​u​b​.​c​o​m​/​S​t​a​b​l​e​O​p​s​/​s​t​a​b​l​e​o​p​s​-​p​l​a​y​g​r​o​u​n​d​"​ ​t​a​r​g​e​t​=​"​_​b​l​a​n​k​"​ ​r​e​l​=​"​n​o​r​e​f​e​r​r​e​r​"​ ​c​l​a​s​s​=​"​u​n​d​e​r​l​i​n​e​ ​u​n​d​e​r​l​i​n​e​-​o​f​f​s​e​t​-​2​"​>​V​i​e​w​ ​s​o​u​r​c​e​ ​o​n​ ​G​i​t​L​a​b​<​/​a​>​.
 	 */
 	footer: string
 	checkout: {
@@ -400,14 +396,10 @@ type RootTranslation = {
 		 */
 		noAddressHint: string
 		/**
-		 * T​R​O​N​ ​a​n​d​ ​S​o​l​a​n​a​ ​a​r​e​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​p​a​i​d​ ​p​l​a​n​s​.​ ​P​l​e​a​s​e​ ​s​e​l​e​c​t​ ​E​V​M​ ​c​h​a​i​n​s​.
-		 */
-		droppedNonEvmOnly: string
-		/**
-		 * T​h​e​ ​f​o​l​l​o​w​i​n​g​ ​c​h​a​i​n​s​ ​a​r​e​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​p​a​i​d​ ​p​l​a​n​s​.​ ​P​l​e​a​s​e​ ​d​e​s​e​l​e​c​t​:​ ​{​c​h​a​i​n​s​}
+		 * N​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​ ​c​o​u​l​d​ ​b​e​ ​a​s​s​i​g​n​e​d​ ​f​o​r​:​ ​{​c​h​a​i​n​s​}​.​ ​M​a​k​e​ ​s​u​r​e​ ​y​o​u​r​ ​p​l​a​n​ ​s​u​p​p​o​r​t​s​ ​t​h​e​s​e​ ​c​h​a​i​n​s​ ​a​n​d​ ​t​h​a​t​ ​a​d​d​r​e​s​s​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​ ​(​o​r​ ​A​u​t​o​-​i​m​p​o​r​t​ ​i​s​ ​o​n​)​.
 		 * @param {unknown} chains
 		 */
-		droppedNonEvmMix: RequiredParams<'chains'>
+		droppedUnallocated: RequiredParams<'chains'>
 		/**
 		 * E​n​a​b​l​e​ ​A​u​t​o​-​i​m​p​o​r​t​ ​o​r​ ​c​o​n​f​i​g​u​r​e​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​e​s​ ​i​n​ ​t​h​e​ ​D​a​s​h​b​o​a​r​d​.
 		 */
@@ -620,13 +612,9 @@ export type TranslationFunctions = {
 	}
 	dropped: {
 		/**
-		 * TRON and Solana are only available on paid plans. Please select EVM chains.
+		 * No receiving address could be assigned for: {chains}. Make sure your plan supports these chains and that addresses are configured (or Auto-import is on).
 		 */
-		nonEvmOnly: () => LocalizedString
-		/**
-		 * The following chains are only available on paid plans. Please deselect: {chains}
-		 */
-		nonEvmMix: (arg: { chains: unknown }) => LocalizedString
+		unallocated: (arg: { chains: unknown }) => LocalizedString
 		/**
 		 * Enable Auto-import or configure receiving addresses in the Dashboard.
 		 */
@@ -729,7 +717,7 @@ export type TranslationFunctions = {
 		manualConfirmed: () => LocalizedString
 	}
 	/**
-	 * This playground calls <code>@stableops/api-sdk</code> directly from your browser with the API key you provide. Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I've sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://gitlab.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.
+	 * This playground calls <code>@stableops/api-sdk</code> directly from your browser with the API key you provide. Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I've sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://github.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.
 	 */
 	footer: () => LocalizedString
 	checkout: {
@@ -806,13 +794,9 @@ export type TranslationFunctions = {
 		 */
 		noAddressHint: () => LocalizedString
 		/**
-		 * TRON and Solana are only available on paid plans. Please select EVM chains.
+		 * No receiving address could be assigned for: {chains}. Make sure your plan supports these chains and that addresses are configured (or Auto-import is on).
 		 */
-		droppedNonEvmOnly: () => LocalizedString
-		/**
-		 * The following chains are only available on paid plans. Please deselect: {chains}
-		 */
-		droppedNonEvmMix: (arg: { chains: unknown }) => LocalizedString
+		droppedUnallocated: (arg: { chains: unknown }) => LocalizedString
 		/**
 		 * Enable Auto-import or configure receiving addresses in the Dashboard.
 		 */
