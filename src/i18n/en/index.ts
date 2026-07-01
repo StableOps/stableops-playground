@@ -96,8 +96,6 @@ const en = {
     waitTerminalStatus: 'wait {target} stopped: order status is {status}',
     manualConfirmed: 'manual transfer confirmed; polling for on-chain detection',
   },
-  footer:
-    'This playground calls <code>@stableops/api-sdk</code> directly from your browser with the API key you provide. Step 2 calls <code>@stableops/wallet-sdk</code> to ask the browser wallet to send a real testnet transaction — or you can skip the wallet, transfer to the shown address from any wallet/exchange, and click "I\'ve sent it manually". Orders advance to detected / confirmed / finalized via the scanner and confirmations watcher. In sandbox (testnet), if your org has no receiving address yet, one is auto-created for this order. Use a sandbox key only — never paste a live key into a browser. <a href="https://github.com/StableOps/stableops-playground" target="_blank" rel="noreferrer" class="underline underline-offset-2">View source on GitLab</a>.',
   checkout: {
     apiKey: 'API Key',
     apiKeyPlaceholder: 'Paste your sandbox API key (sk_sandbox_…)',

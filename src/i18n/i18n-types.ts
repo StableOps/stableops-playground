@@ -318,10 +318,6 @@ type RootTranslation = {
 		 */
 		manualConfirmed: string
 	}
-	/**
-	 * T​h​i​s​ ​p​l​a​y​g​r​o​u​n​d​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​a​p​i​-​s​d​k​<​/​c​o​d​e​>​ ​d​i​r​e​c​t​l​y​ ​f​r​o​m​ ​y​o​u​r​ ​b​r​o​w​s​e​r​ ​w​i​t​h​ ​t​h​e​ ​A​P​I​ ​k​e​y​ ​y​o​u​ ​p​r​o​v​i​d​e​.​ ​S​t​e​p​ ​2​ ​c​a​l​l​s​ ​<​c​o​d​e​>​@​s​t​a​b​l​e​o​p​s​/​w​a​l​l​e​t​-​s​d​k​<​/​c​o​d​e​>​ ​t​o​ ​a​s​k​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​w​a​l​l​e​t​ ​t​o​ ​s​e​n​d​ ​a​ ​r​e​a​l​ ​t​e​s​t​n​e​t​ ​t​r​a​n​s​a​c​t​i​o​n​ ​—​ ​o​r​ ​y​o​u​ ​c​a​n​ ​s​k​i​p​ ​t​h​e​ ​w​a​l​l​e​t​,​ ​t​r​a​n​s​f​e​r​ ​t​o​ ​t​h​e​ ​s​h​o​w​n​ ​a​d​d​r​e​s​s​ ​f​r​o​m​ ​a​n​y​ ​w​a​l​l​e​t​/​e​x​c​h​a​n​g​e​,​ ​a​n​d​ ​c​l​i​c​k​ ​"​I​'​v​e​ ​s​e​n​t​ ​i​t​ ​m​a​n​u​a​l​l​y​"​.​ ​O​r​d​e​r​s​ ​a​d​v​a​n​c​e​ ​t​o​ ​d​e​t​e​c​t​e​d​ ​/​ ​c​o​n​f​i​r​m​e​d​ ​/​ ​f​i​n​a​l​i​z​e​d​ ​v​i​a​ ​t​h​e​ ​s​c​a​n​n​e​r​ ​a​n​d​ ​c​o​n​f​i​r​m​a​t​i​o​n​s​ ​w​a​t​c​h​e​r​.​ ​I​n​ ​s​a​n​d​b​o​x​ ​(​t​e​s​t​n​e​t​)​,​ ​i​f​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​ ​y​e​t​,​ ​o​n​e​ ​i​s​ ​a​u​t​o​-​c​r​e​a​t​e​d​ ​f​o​r​ ​t​h​i​s​ ​o​r​d​e​r​.​ ​U​s​e​ ​a​ ​s​a​n​d​b​o​x​ ​k​e​y​ ​o​n​l​y​ ​—​ ​n​e​v​e​r​ ​p​a​s​t​e​ ​a​ ​l​i​v​e​ ​k​e​y​ ​i​n​t​o​ ​a​ ​b​r​o​w​s​e​r​.​ ​<​a​ ​h​r​e​f​=​"​h​t​t​p​s​:​/​/​g​i​t​h​u​b​.​c​o​m​/​S​t​a​b​l​e​O​p​s​/​s​t​a​b​l​e​o​p​s​-​p​l​a​y​g​r​o​u​n​d​"​ ​t​a​r​g​e​t​=​"​_​b​l​a​n​k​"​ ​r​e​l​=​"​n​o​r​e​f​e​r​r​e​r​"​ ​c​l​a​s​s​=​"​u​n​d​e​r​l​i​n​e​ ​u​n​d​e​r​l​i​n​e​-​o​f​f​s​e​t​-​2​"​>​V​i​e​w​ ​s​o​u​r​c​e​ ​o​n​ ​G​i​t​L​a​b​<​/​a​>​.
-	 */
-	footer: string
 	checkout: {
 		/**
 		 * A​P​I​ ​K​e​y

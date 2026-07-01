@@ -714,11 +714,6 @@ export function Playground({
           {log.length === 0 ? '(empty)' : log.join('\n')}
         </pre>
       </div>
-
-      <p
-        className="text-sm text-muted-foreground"
-        dangerouslySetInnerHTML={{ __html: LL.footer() }}
-      />
     </div>
   )
 }
