@@ -10,7 +10,7 @@ import {
   type ChainId,
   type WalletProviderByChain,
 } from '@stableops/wallet-sdk'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   errMessage,
@@ -27,6 +27,11 @@ import type { PlaygroundTestnet } from './testnets'
 import type { Step } from './ui-bits'
 import type { TranslationFunctions } from './i18n/i18n-types.js'
 import { createConfirmationProgressGuard } from './wallet-confirmation-guard'
+import {
+  resolveWalletPollSignal,
+  walletPollSignalForStatus,
+  type WalletPollSignal,
+} from './wallet-poll-advance'
 
 export type UsePlaygroundStateInput = {
   client: StableOps | null
@@ -111,6 +116,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
   // 每次 reset / 重新建单时递增，旧轮询循环检测到 generation 变化后立即退出，
   // 避免旧循环的 updateStep 覆盖新订单的状态。
   const pollGenRef = useRef(0)
+  const walletAdvancedResolveRef = useRef<((signal: WalletPollSignal) => void) | null>(null)
 
   const reset = useCallback(() => {
     pollGenRef.current += 1
@@ -374,17 +380,63 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
       setBusy('pay')
       updateStep(1, { status: 'pending', detail: LL.status.waitingWallet() })
       const gen = pollGenRef.current
+      const orderId = order.id
       try {
-        const sent = await sendWalletPayment({
-          provider: selected.provider,
-          amount: order.amount,
-          instruction: selected.instruction,
-          solanaRpcUrl:
-            selected.instruction.chain === 'solana-devnet'
-              ? 'https://api.devnet.solana.com'
-              : undefined,
+        // 由 useEffect 轮询检测 scanner 是否先于 WalletConnect relay 完成检测或进入终态，
+        // 通过 walletAdvancedResolveRef 通知这里，避免弹窗卡在"正在打开支付"。
+        const orderAdvancedPromise = new Promise<WalletPollSignal>((resolve) => {
+          walletAdvancedResolveRef.current = resolve
         })
-        if (gen !== pollGenRef.current) return false
+
+        const walletResult = await Promise.race([
+          sendWalletPayment({
+            provider: selected.provider,
+            amount: order.amount,
+            instruction: selected.instruction,
+            solanaRpcUrl:
+              selected.instruction.chain === 'solana-devnet'
+                ? 'https://api.devnet.solana.com'
+                : undefined,
+          }).then((sent) => ({ source: 'wallet', sent }) as const),
+          orderAdvancedPromise.then((signal) => ({ source: 'poll', signal }) as const),
+        ])
+
+        if (gen !== pollGenRef.current) {
+          walletAdvancedResolveRef.current = null
+          return false
+        }
+
+        walletAdvancedResolveRef.current = null
+
+        // Scanner 先检测到交易：直接标记完成，跳过 WalletConnect 的剩余等待。
+        if (walletResult.source === 'poll') {
+          const resolution = await resolveWalletPollSignal({
+            orderId,
+            signal: walletResult.signal,
+            generation: gen,
+            currentGeneration: () => pollGenRef.current,
+            refreshOrder,
+          })
+          if (resolution.kind === 'stale') return false
+          if (resolution.kind === 'terminal') {
+            updateStep(1, {
+              status: 'error',
+              detail: LL.status.terminalStatus({ target: 'detected', status: resolution.status }),
+            })
+            append(LL.log.waitTerminalStatus({ target: 'detected', status: resolution.status }))
+            if (gen === pollGenRef.current) setBusy(null)
+            return false
+          }
+          updateStep(1, {
+            status: 'done',
+            detail: LL.status.orderStatus({ status: resolution.status }),
+          })
+          if (gen === pollGenRef.current) setBusy(null)
+          void continueToFinal(orderId).catch(() => undefined)
+          return true
+        }
+
+        const { sent } = walletResult
 
         // 在后台监听链上确认结果：revert 时更新 UI，但若 scanner 已推进则以链上为准。
         const guard = createConfirmationProgressGuard()
@@ -404,22 +456,18 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
           link: txUrl ? { href: txUrl, label: LL.status.viewTx() } : undefined,
         })
         append(LL.log.walletSent({ hash: sent.txHash }))
+        // txHash 已到手，立即释放 busy，后续 continueToFinal 走 silent 路径。
+        if (gen === pollGenRef.current) setBusy(null)
         void (async () => {
-          const fresh = await refreshOrder(order.id)
+          const fresh = await refreshOrder(orderId)
           if (gen !== pollGenRef.current) return
-          // 如果服务端已推进（refreshOrder 返回非 created），立即标记避免异步 confirmation reject 冲突。
-          if (fresh && fresh.status !== 'created') guard.markProgressed()
-          // 由这里接管 detected→confirmed→finalized 接力。
-          await continueToFinal(order.id)
+          if (fresh && isAcceptedOrderStatus('detected', fresh.status)) guard.markProgressed()
+          await continueToFinal(orderId)
           guard.markProgressed()
-        })()
-          .catch((err) => {
-            if (gen !== pollGenRef.current) return
-            append(LL.log.refreshFailed({ error: errMessage(err) }))
-          })
-          .finally(() => {
-            if (gen === pollGenRef.current) setBusy(null)
-          })
+        })().catch((err) => {
+          if (gen !== pollGenRef.current) return
+          append(LL.log.refreshFailed({ error: errMessage(err) }))
+        })
         return true
       } catch (err) {
         if (gen !== pollGenRef.current) return false
@@ -430,10 +478,11 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         updateStep(1, { status: 'error', detail: message })
         append(LL.log.walletFailed({ message }))
         if (gen === pollGenRef.current) setBusy(null)
+        walletAdvancedResolveRef.current = null
         return false
       }
     },
-    [append, order, refreshOrder, updateStep, continueToFinal, LL],
+    [append, order, refreshOrder, updateStep, continueToFinal, LL, client],
   )
 
   // 手动转账路径：用户用任意钱包/交易所往收款地址转完账后点此确认。不发链上交易——
@@ -446,6 +495,35 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     // 手动确认后接管 detected→confirmed→finalized 接力。
     await continueToFinal(order.id)
   }, [append, order, refreshOrder, updateStep, continueToFinal, LL])
+
+  // 支付中轮询：当 busy === 'pay' 时检测 scanner 是否已推进订单状态，
+  // 通过 walletAdvancedResolveRef 通知 payWithWallet 提前退出等待。
+  useEffect(() => {
+    if (busy !== 'pay' || !order || !client) return
+    const orderId: string = order.id
+    const api = client
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
+    async function poll() {
+      try {
+        const fresh = await api.paymentOrders.retrieve(orderId)
+        const signal = walletPollSignalForStatus(fresh.status)
+        if (!cancelled && signal) {
+          walletAdvancedResolveRef.current?.(signal)
+          walletAdvancedResolveRef.current = null
+          return
+        }
+      } catch {
+        // 单次轮询失败继续
+      }
+      if (!cancelled) timer = setTimeout(poll, 3_000)
+    }
+    void poll()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [busy, order, client])
 
   return useMemo(
     () => ({
