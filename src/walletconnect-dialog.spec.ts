@@ -99,4 +99,15 @@ describe('WalletConnectDialog shared UI adapter', () => {
     expect(source).toContain('connectionRefreshAvailable={walletConnectRefreshAvailable}')
     expect(source).toContain('onRefreshConnection={() => {')
   })
+
+  it('disables injected wallet pay button when the selected chain has no browser provider', () => {
+    const source = readFileSync(resolve(__dirname, 'playground.tsx'), 'utf8')
+
+    expect(source).toContain('const [providers, setProviders] = useState<WalletProviderByChain>({})')
+    expect(source).toContain('const injectedWalletAvailable = Boolean(')
+    expect(source).toContain('providers[resolvedSelectedPay.chain]')
+    expect(source).toContain('setProviders(getInjectedWalletProviders())')
+    expect(source).toContain('[resolvedSelectedPay?.chain]')
+    expect(source).toContain('!injectedWalletAvailable')
+  })
 })

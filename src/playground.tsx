@@ -3,9 +3,11 @@
 import { StableOps, type ChainId, type Asset } from '@stableops/api-sdk'
 import {
   createWalletConnectController,
+  getInjectedWalletProviders,
   setWalletSdkDebug,
   type WalletConnectController,
   type WalletConnectControllerState,
+  type WalletProviderByChain,
 } from '@stableops/wallet-sdk'
 import QRCode from 'qrcode'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -127,6 +129,7 @@ export function Playground({
   // 支付项精确到 (链, 资产)：同一条链可接受多种币（共享同一收款地址），选择器逐项列出，
   // 钱包支付按选定的 (链, 资产) 付。
   const [selectedPay, setSelectedPay] = useState<{ chain: ChainId; asset: Asset } | null>(null)
+  const [providers, setProviders] = useState<WalletProviderByChain>({})
   const [walletConnectOpen, setWalletConnectOpen] = useState(false)
   const [walletConnectHidden, setWalletConnectHidden] = useState(false)
   const [walletConnectController, setWalletConnectController] =
@@ -202,6 +205,13 @@ export function Playground({
     () => getPaymentCandidateChains(payChainOptions, resolvedSelectedPay?.chain ?? null),
     [payChainOptions, resolvedSelectedPay],
   )
+  const injectedWalletAvailable = Boolean(
+    resolvedSelectedPay && providers[resolvedSelectedPay.chain],
+  )
+
+  useEffect(() => {
+    setProviders(getInjectedWalletProviders())
+  }, [resolvedSelectedPay?.chain])
 
   // 订单变化时，若当前支付项不在新订单的指令中，回退第一条可用链资产。
   useEffect(() => {
@@ -526,7 +536,13 @@ export function Playground({
             size="sm"
             variant="secondary"
             onClick={() => void payWithWallet(undefined, resolvedSelectedPay ?? undefined)}
-            disabled={!order || busy === 'create' || busy === 'pay' || steps[1].status === 'done'}>
+            disabled={
+              !order ||
+              busy === 'create' ||
+              busy === 'pay' ||
+              steps[1].status === 'done' ||
+              !injectedWalletAvailable
+            }>
             {busy === 'pay' ? LL.actions.paying() : LL.actions.pay()}
           </Button>
           <Button
