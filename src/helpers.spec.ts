@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   filterWalletConnectWallets,
   getPaymentCandidateChains,
+  resolvePaymentSelection,
   getUnauthorizedWalletConnectChains,
   getWalletConnectChainSelection,
   mergeWalletProviders,
@@ -69,16 +70,42 @@ describe('getWalletConnectChainSelection', () => {
 describe('getPaymentCandidateChains', () => {
   const chains = ['base-sepolia', 'tron-nile', 'solana-devnet'] as const
 
-  it('uses all order chains while payment network selection is automatic', () => {
-    expect(getPaymentCandidateChains(chains, null)).toEqual([
-      'base-sepolia',
-      'tron-nile',
-      'solana-devnet',
-    ])
+  it('uses the first order chain when no payment chain is selected', () => {
+    expect(getPaymentCandidateChains(chains, null)).toEqual(['base-sepolia'])
+  })
+
+  it('returns no candidate chain for an empty order', () => {
+    expect(getPaymentCandidateChains([], null)).toEqual([])
   })
 
   it('uses only the selected payment chain when one is selected', () => {
     expect(getPaymentCandidateChains(chains, 'tron-nile')).toEqual(['tron-nile'])
+  })
+})
+
+describe('resolvePaymentSelection', () => {
+  const instructions = [
+    { chain: 'base-sepolia', asset: 'USDC', address: '0xbase' },
+    { chain: 'tron-nile', asset: 'USDT', address: 'TTron' },
+  ] as const
+
+  it('defaults to the first instruction when no payment item is selected', () => {
+    expect(resolvePaymentSelection(instructions, null)).toEqual({
+      chain: 'base-sepolia',
+      asset: 'USDC',
+    })
+  })
+
+  it('falls back to the first instruction when the selected item is no longer available', () => {
+    expect(
+      resolvePaymentSelection(instructions, {
+        chain: 'solana-devnet',
+        asset: 'USDC',
+      }),
+    ).toEqual({
+      chain: 'base-sepolia',
+      asset: 'USDC',
+    })
   })
 })
 

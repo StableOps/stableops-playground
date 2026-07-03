@@ -23,6 +23,7 @@ import {
   getPaymentCandidateChains,
   getUnauthorizedWalletConnectChains,
   getWalletConnectChainSelection,
+  resolvePaymentSelection,
 } from './helpers'
 import { PlaygroundTestnets, type PlaygroundTestnet } from './testnets'
 import { usePlaygroundState } from './use-playground-state'
@@ -193,23 +194,24 @@ export function Playground({
     if (!order) return []
     return Array.from(new Set(order.paymentInstructions.map((pi) => pi.chain)))
   }, [order])
+  const resolvedSelectedPay = useMemo(
+    () => resolvePaymentSelection(order?.paymentInstructions ?? [], selectedPay),
+    [order, selectedPay],
+  )
   const mobileWalletCandidateChains = useMemo(
-    () => getPaymentCandidateChains(payChainOptions, selectedPay?.chain ?? null),
-    [payChainOptions, selectedPay],
+    () => getPaymentCandidateChains(payChainOptions, resolvedSelectedPay?.chain ?? null),
+    [payChainOptions, resolvedSelectedPay],
   )
 
-  // 订单变化时，若当前支付项不在新订单的指令中，回退自动。
+  // 订单变化时，若当前支付项不在新订单的指令中，回退第一条可用链资产。
   useEffect(() => {
     if (
-      selectedPay &&
-      order &&
-      !order.paymentInstructions.some(
-        (pi) => pi.chain === selectedPay.chain && pi.asset === selectedPay.asset,
-      )
-    ) {
-      setSelectedPay(null)
-    }
-  }, [order, selectedPay])
+      selectedPay?.chain === resolvedSelectedPay?.chain &&
+      selectedPay?.asset === resolvedSelectedPay?.asset
+    )
+      return
+    setSelectedPay(resolvedSelectedPay)
+  }, [resolvedSelectedPay, selectedPay])
 
   const walletConnectChainSelection = useMemo(() => {
     if (!order) return { evmChains: [], solanaChains: [], tronChains: [], supportedChains: [] }
@@ -379,7 +381,7 @@ export function Playground({
             )
             return
           }
-          const paid = await payWithWallet(controller.providers, selectedPay ?? undefined)
+          const paid = await payWithWallet(controller.providers, resolvedSelectedPay ?? undefined)
           if (paid) setWalletConnectOpen(false)
           return
         } catch (err) {
@@ -407,7 +409,7 @@ export function Playground({
       LL,
       order,
       payWithWallet,
-      selectedPay,
+      resolvedSelectedPay,
       walletConnectChainSelection,
       walletConnectProjectId,
       walletConnectController,
@@ -418,9 +420,9 @@ export function Playground({
     const controller = walletConnectController
     if (!controller) return
     setWalletConnectError(null)
-    const paid = await payWithWallet(controller.providers, selectedPay ?? undefined)
+    const paid = await payWithWallet(controller.providers, resolvedSelectedPay ?? undefined)
     if (paid) setWalletConnectOpen(false)
-  }, [payWithWallet, selectedPay, walletConnectController])
+  }, [payWithWallet, resolvedSelectedPay, walletConnectController])
 
   return (
     <div className={cn('not-prose my-6 space-y-5', className)}>
@@ -523,7 +525,7 @@ export function Playground({
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => void payWithWallet(undefined, selectedPay ?? undefined)}
+            onClick={() => void payWithWallet(undefined, resolvedSelectedPay ?? undefined)}
             disabled={!order || busy === 'create' || busy === 'pay' || steps[1].status === 'done'}>
             {busy === 'pay' ? LL.actions.paying() : LL.actions.pay()}
           </Button>
@@ -608,19 +610,10 @@ export function Playground({
       {order && steps[1].status !== 'done' ? (
         <div className="space-y-3 rounded-lg border bg-background/50 p-4">
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <button
-              type="button"
-              onClick={() => setSelectedPay(null)}
-              className={`cursor-pointer rounded-full border px-2 py-0.5 font-mono transition ${
-                selectedPay === null
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground'
-              }`}>
-              {LL.network.auto()}
-            </button>
             {order.paymentInstructions.map((instruction) => {
               const active =
-                selectedPay?.chain === instruction.chain && selectedPay?.asset === instruction.asset
+                resolvedSelectedPay?.chain === instruction.chain &&
+                resolvedSelectedPay?.asset === instruction.asset
               return (
                 <button
                   key={`${instruction.chain}:${instruction.asset}`}

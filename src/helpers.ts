@@ -1,5 +1,5 @@
 import { StableOpsError } from '@stableops/api-sdk'
-import type { PaymentOrderInstruction } from '@stableops/api-sdk'
+import type { Asset, PaymentOrderInstruction } from '@stableops/api-sdk'
 import type {
   ChainId,
   EvmWalletChainId,
@@ -83,7 +83,34 @@ export function getPaymentCandidateChains(
   chains: readonly WalletPaymentInstruction['chain'][],
   selectedChain: WalletPaymentInstruction['chain'] | null,
 ): WalletPaymentInstruction['chain'][] {
-  return selectedChain ? chains.filter((chain) => chain === selectedChain) : [...chains]
+  if (selectedChain) return chains.filter((chain) => chain === selectedChain)
+  const first = chains[0]
+  return first ? [first] : []
+}
+
+export type PaymentSelection = {
+  chain: ChainId
+  asset: Asset
+}
+
+export function resolvePaymentSelection(
+  instructions: readonly { chain: string; asset: string }[],
+  selected: PaymentSelection | null,
+): PaymentSelection | null {
+  if (
+    selected &&
+    instructions.some((instruction) => {
+      return instruction.chain === selected.chain && instruction.asset === selected.asset
+    })
+  ) {
+    return selected
+  }
+  const first = instructions[0]
+  if (!first) return null
+  return {
+    chain: first.chain as ChainId,
+    asset: first.asset as Asset,
+  }
 }
 
 export function sleep(ms: number): Promise<void> {
