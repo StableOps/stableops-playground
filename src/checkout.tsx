@@ -181,7 +181,6 @@ export function Checkout({
       }
       const query = new URLSearchParams({
         client_secret: checkout.clientSecret,
-        lang: locale,
       })
       window.location.assign(
         `${checkoutUrl}/c/${encodeURIComponent(checkout.id)}?${query.toString()}`,
