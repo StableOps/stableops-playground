@@ -1,7 +1,11 @@
 import type { PaymentOrderDetail } from '@stableops/api-sdk'
 import { describe, expect, it, vi } from 'vitest'
 
-import { resolveWalletPollSignal, walletPollSignalForStatus } from './wallet-poll-advance'
+import {
+  resolveWalletPollSignal,
+  walletPaymentPreflightForStatus,
+  walletPollSignalForStatus,
+} from './wallet-poll-advance'
 
 describe('wallet poll advance', () => {
   it('classifies only detected/confirmed/finalized as progressed signals', () => {
@@ -53,5 +57,29 @@ describe('wallet poll advance', () => {
         refreshOrder,
       }),
     ).resolves.toEqual({ kind: 'progressed', status: 'detected' })
+  })
+})
+
+describe('walletPaymentPreflightForStatus', () => {
+  it('allows wallet payment only while the order is still created', () => {
+    expect(walletPaymentPreflightForStatus('created')).toEqual({ kind: 'payable' })
+  })
+
+  it('stops wallet payment when the order has already reached a failed terminal status', () => {
+    expect(walletPaymentPreflightForStatus('canceled')).toEqual({
+      kind: 'terminal',
+      status: 'canceled',
+    })
+  })
+
+  it('treats already detected orders as progressed instead of opening the wallet again', () => {
+    expect(walletPaymentPreflightForStatus('detected')).toEqual({
+      kind: 'progressed',
+      status: 'detected',
+    })
+  })
+
+  it('blocks unknown statuses instead of opening the wallet from stale UI state', () => {
+    expect(walletPaymentPreflightForStatus('paused')).toEqual({ kind: 'blocked', status: 'paused' })
   })
 })

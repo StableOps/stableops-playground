@@ -29,6 +29,7 @@ import type { TranslationFunctions } from './i18n/i18n-types.js'
 import { createConfirmationProgressGuard } from './wallet-confirmation-guard'
 import {
   resolveWalletPollSignal,
+  walletPaymentPreflightForStatus,
   walletPollSignalForStatus,
   type WalletPollSignal,
 } from './wallet-poll-advance'
@@ -348,7 +349,33 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
     ) => {
       if (!order) return false
 
-      const allInstructions = order.paymentInstructions.map(toWalletInstruction)
+      setBusy('pay')
+      const gen = pollGenRef.current
+      const orderId = order.id
+      const freshOrder = await refreshOrder(orderId)
+      if (gen !== pollGenRef.current) return false
+      const payableOrder = freshOrder ?? order
+      const preflight = walletPaymentPreflightForStatus(payableOrder.status)
+      if (preflight.kind === 'terminal' || preflight.kind === 'blocked') {
+        updateStep(1, {
+          status: 'error',
+          detail: LL.status.terminalStatus({ target: 'detected', status: preflight.status }),
+        })
+        append(LL.log.waitTerminalStatus({ target: 'detected', status: preflight.status }))
+        if (gen === pollGenRef.current) setBusy(null)
+        return false
+      }
+      if (preflight.kind === 'progressed') {
+        updateStep(1, {
+          status: 'done',
+          detail: LL.status.orderStatus({ status: preflight.status }),
+        })
+        if (gen === pollGenRef.current) setBusy(null)
+        void continueToFinal(orderId).catch(() => undefined)
+        return true
+      }
+
+      const allInstructions = payableOrder.paymentInstructions.map(toWalletInstruction)
       // 精确到 (chain, asset)：选了某个支付项时只保留该条，让钱包付选定的币；
       // 同一条链可接受多种币（共享同一收款地址），不过滤会默认付到首个币。
       const walletInstructions = preferred
@@ -370,17 +397,16 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         })
         append(
           LL.log.providerNotFound({
-            chain: order.paymentInstructions.map((instruction) => instruction.chain).join(', '),
+            chain: payableOrder.paymentInstructions
+              .map((instruction) => instruction.chain)
+              .join(', '),
           }),
         )
         setBusy(null)
         return false
       }
 
-      setBusy('pay')
       updateStep(1, { status: 'pending', detail: LL.status.waitingWallet() })
-      const gen = pollGenRef.current
-      const orderId = order.id
       try {
         // 由 useEffect 轮询检测 scanner 是否先于 WalletConnect relay 完成检测或进入终态，
         // 通过 walletAdvancedResolveRef 通知这里，避免弹窗卡在"正在打开支付"。
@@ -391,7 +417,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
         const walletResult = await Promise.race([
           sendWalletPayment({
             provider: selected.provider,
-            amount: order.amount,
+            amount: payableOrder.amount,
             instruction: selected.instruction,
             solanaRpcUrl:
               selected.instruction.chain === 'solana-devnet'
