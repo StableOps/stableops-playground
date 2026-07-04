@@ -35,11 +35,11 @@ describe('WalletConnectDialog shared UI adapter', () => {
     expect(source).not.toContain('export function WalletIcon')
   })
 
-  it('使用 wallet-ui 内建文案，通过 locale prop 指定语言', () => {
+  it('使用 playground 自己的 messageOverrides 扩展 wallet-ui 中文文案', () => {
     const source = readFileSync(resolve(__dirname, 'walletconnect-dialog.tsx'), 'utf8')
 
-    expect(source).toContain('locale={locale}')
-    expect(source).not.toContain('function toWalletConnectCopy')
+    expect(source).toContain("messageOverrides={locale === 'zh' ? zhMessageOverrides : undefined}")
+    expect(source).toContain('const zhMessageOverrides:')
     expect(source).not.toContain('labels.payWith')
   })
 
