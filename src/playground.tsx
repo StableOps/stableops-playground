@@ -192,6 +192,14 @@ export function Playground({
     initialSteps,
   })
 
+  const logRef = useRef<HTMLPreElement>(null)
+
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight
+    }
+  }, [log])
+
   // 订单支付时可选的链（去重），作为支付网络选择器的数据源。
   const payChainOptions = useMemo(() => {
     if (!order) return []
@@ -719,7 +727,9 @@ export function Playground({
 
       <div className="rounded-lg border bg-background/50 p-3.5">
         <div className="mb-1 text-xs font-medium text-muted-foreground">Activity log</div>
-        <pre className="max-h-40 overflow-y-auto font-mono text-xs leading-relaxed">
+        <pre
+          ref={logRef}
+          className="max-h-40 overflow-y-auto font-mono text-xs leading-relaxed">
           {log.length === 0 ? '(empty)' : log.join('\n')}
         </pre>
       </div>

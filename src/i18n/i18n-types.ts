@@ -443,49 +443,51 @@ type RootTranslation = {
 		 */
 		merchantUserId: string
 		/**
-		 * U​S​D​C​ ​t​e​s​t​ ​c​h​a​i​n​s
+		 * C​h​a​i​n​s​ ​a​n​d​ ​a​s​s​e​t​s​ ​(​m​u​l​t​i​-​s​e​l​e​c​t​)
 		 */
-		chains: string
+		chainAssets: string
 		/**
-		 * 1​.​ ​P​r​e​p​a​r​e​ ​p​l​a​n​s
+		 * A​d​d​ ​u​s​e​r
+		 */
+		addUser: string
+		/**
+		 * P​r​e​p​a​r​e​ ​p​l​a​n​s
 		 */
 		createPlans: string
 		/**
-		 * 2​.​ ​C​r​e​a​t​e​ ​s​u​b​s​c​r​i​p​t​i​o​n
+		 * 1​.​ ​C​r​e​a​t​e​ ​s​u​b​s​c​r​i​p​t​i​o​n
 		 */
 		createSubscription: string
 		/**
-		 * 3​.​ ​C​r​e​a​t​e​ ​p​o​r​t​a​l​ ​s​e​s​s​i​o​n
+		 * 2​.​ ​C​r​e​a​t​e​ ​p​o​r​t​a​l​ ​s​e​s​s​i​o​n
 		 */
 		createPortal: string
 		/**
-		 * 4​.​ ​O​p​e​n​ ​i​n​v​o​i​c​e​ ​c​h​e​c​k​o​u​t
+		 * 3​.​ ​G​o​ ​t​o​ ​c​h​e​c​k​o​u​t
 		 */
 		payInvoice: string
 		/**
-		 * 5​.​ ​C​h​e​c​k​ ​p​a​y​m​e​n​t​ ​s​t​a​t​u​s
+		 * 4​.​ ​C​h​e​c​k​ ​p​a​y​m​e​n​t​ ​s​t​a​t​u​s
 		 */
 		waitPaid: string
 		/**
-		 * 6​.​ ​U​p​g​r​a​d​e​ ​t​o​ ​P​r​o
+		 * C​h​a​n​g​e​ ​p​l​a​n
 		 */
-		upgrade: string
+		changePlan: string
+		/**
+		 * 5​.​ ​U​p​g​r​a​d​e​ ​t​o​ ​{​p​l​a​n​}
+		 * @param {unknown} plan
+		 */
+		upgradeTo: RequiredParams<'plan'>
+		/**
+		 * 6​.​ ​D​o​w​n​g​r​a​d​e​ ​t​o​ ​{​p​l​a​n​}
+		 * @param {unknown} plan
+		 */
+		downgradeTo: RequiredParams<'plan'>
 		/**
 		 * R​e​s​e​t
 		 */
 		reset: string
-		/**
-		 * R​e​s​t​o​r​e
-		 */
-		restore: string
-		/**
-		 * S​t​a​r​t​e​r​ ​p​l​a​n
-		 */
-		starterPlan: string
-		/**
-		 * P​r​o​ ​p​l​a​n
-		 */
-		proPlan: string
 		/**
 		 * S​u​b​s​c​r​i​p​t​i​o​n
 		 */
@@ -494,14 +496,6 @@ type RootTranslation = {
 		 * O​p​e​n​ ​i​n​v​o​i​c​e
 		 */
 		openInvoice: string
-		/**
-		 * A​c​t​i​v​i​t​y
-		 */
-		log: string
-		/**
-		 * L​a​t​e​s​t​ ​r​e​s​p​o​n​s​e
-		 */
-		response: string
 		/**
 		 * E​n​t​e​r​ ​a​ ​s​a​n​d​b​o​x​ ​A​P​I​ ​k​e​y​ ​f​i​r​s​t​.
 		 */
@@ -515,9 +509,9 @@ type RootTranslation = {
 		 */
 		noOpenInvoice: string
 		/**
-		 * T​h​e​ ​p​o​p​u​p​ ​w​a​s​ ​b​l​o​c​k​e​d​.​ ​R​e​d​i​r​e​c​t​i​n​g​ ​t​h​i​s​ ​t​a​b​ ​t​o​ ​C​h​e​c​k​o​u​t​.
+		 * O​p​e​n​ ​C​h​e​c​k​o​u​t
 		 */
-		popupBlocked: string
+		openCheckout: string
 		/**
 		 * u​n​k​n​o​w​n​ ​e​r​r​o​r
 		 */
@@ -930,49 +924,49 @@ export type TranslationFunctions = {
 		 */
 		merchantUserId: () => LocalizedString
 		/**
-		 * USDC test chains
+		 * Chains and assets (multi-select)
 		 */
-		chains: () => LocalizedString
+		chainAssets: () => LocalizedString
 		/**
-		 * 1. Prepare plans
+		 * Add user
+		 */
+		addUser: () => LocalizedString
+		/**
+		 * Prepare plans
 		 */
 		createPlans: () => LocalizedString
 		/**
-		 * 2. Create subscription
+		 * 1. Create subscription
 		 */
 		createSubscription: () => LocalizedString
 		/**
-		 * 3. Create portal session
+		 * 2. Create portal session
 		 */
 		createPortal: () => LocalizedString
 		/**
-		 * 4. Open invoice checkout
+		 * 3. Go to checkout
 		 */
 		payInvoice: () => LocalizedString
 		/**
-		 * 5. Check payment status
+		 * 4. Check payment status
 		 */
 		waitPaid: () => LocalizedString
 		/**
-		 * 6. Upgrade to Pro
+		 * Change plan
 		 */
-		upgrade: () => LocalizedString
+		changePlan: () => LocalizedString
+		/**
+		 * 5. Upgrade to {plan}
+		 */
+		upgradeTo: (arg: { plan: unknown }) => LocalizedString
+		/**
+		 * 6. Downgrade to {plan}
+		 */
+		downgradeTo: (arg: { plan: unknown }) => LocalizedString
 		/**
 		 * Reset
 		 */
 		reset: () => LocalizedString
-		/**
-		 * Restore
-		 */
-		restore: () => LocalizedString
-		/**
-		 * Starter plan
-		 */
-		starterPlan: () => LocalizedString
-		/**
-		 * Pro plan
-		 */
-		proPlan: () => LocalizedString
 		/**
 		 * Subscription
 		 */
@@ -981,14 +975,6 @@ export type TranslationFunctions = {
 		 * Open invoice
 		 */
 		openInvoice: () => LocalizedString
-		/**
-		 * Activity
-		 */
-		log: () => LocalizedString
-		/**
-		 * Latest response
-		 */
-		response: () => LocalizedString
 		/**
 		 * Enter a sandbox API key first.
 		 */
@@ -1002,9 +988,9 @@ export type TranslationFunctions = {
 		 */
 		noOpenInvoice: () => LocalizedString
 		/**
-		 * The popup was blocked. Redirecting this tab to Checkout.
+		 * Open Checkout
 		 */
-		popupBlocked: () => LocalizedString
+		openCheckout: () => LocalizedString
 		/**
 		 * unknown error
 		 */

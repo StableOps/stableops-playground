@@ -5,21 +5,24 @@ import {
   buildInvoiceAddressSeed,
   demoSubscriptionPlans,
   findOpenInvoice,
-  persistSubscriptionState,
-  readSubscriptionState,
   subscriptionChainOptions,
 } from './subscription-helpers'
+import { PlaygroundTestnets } from './testnets'
 
 describe('subscription playground helpers', () => {
-  it('uses USDC-only testnet options', () => {
-    expect(subscriptionChainOptions.every((option) => option.asset === 'USDC')).toBe(true)
-    expect(subscriptionChainOptions.map((option) => option.chain)).not.toContain('tron-nile')
+  it('uses every configured testnet chain and asset option', () => {
+    expect(subscriptionChainOptions).toHaveLength(PlaygroundTestnets.length)
+    expect(subscriptionChainOptions.map((option) => `${option.chain}:${option.asset}`)).toEqual(
+      PlaygroundTestnets.map((option) => `${option.chain}:${option.asset}`),
+    )
+    expect(subscriptionChainOptions.map((option) => option.chain)).toContain('tron-nile')
+    expect(subscriptionChainOptions.map((option) => option.asset)).toContain('USDT')
   })
 
   it('defines starter and pro demo plans in one group', () => {
     expect(demoSubscriptionPlans).toMatchObject([
       { code: 'demo_starter', groupKey: 'stableops_docs_demo', amount: '0.01' },
-      { code: 'demo_pro', groupKey: 'stableops_docs_demo', amount: '0.02' },
+      { code: 'demo_pro', groupKey: 'stableops_docs_demo', amount: '0.1' },
     ])
   })
 
@@ -31,27 +34,6 @@ describe('subscription playground helpers', () => {
       ]),
     ).toMatchObject({ id: 'inv_open' })
     expect(buildInvoiceAddressSeed('user_1', 'inv_1')).toBe('sub_user_1_inv_inv_1')
-  })
-
-  it('persists resumable browser state', () => {
-    const store = new Map<string, string>()
-    const storage = {
-      getItem: (key: string) => store.get(key) ?? null,
-      setItem: (key: string, value: string) => store.set(key, value),
-      removeItem: (key: string) => store.delete(key),
-    } as Storage
-
-    persistSubscriptionState(storage, {
-      portalToken: 'eps_token',
-      subscriptionId: 'sub_1',
-      invoiceId: 'inv_1',
-    })
-
-    expect(readSubscriptionState(storage)).toEqual({
-      portalToken: 'eps_token',
-      subscriptionId: 'sub_1',
-      invoiceId: 'inv_1',
-    })
   })
 
   it('builds deterministic demo merchant user ids from timestamps', () => {
