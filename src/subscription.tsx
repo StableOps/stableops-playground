@@ -5,6 +5,7 @@ import {
   StableOps,
   type EndUserInvoice,
   type EndUserSubscription,
+  type MerchantInvoiceCheckoutSession,
   type MerchantPlan,
 } from '@stableops/api-sdk'
 
@@ -113,6 +114,8 @@ export function Subscription({
   const copy = i18nObject(locale).subscription
   const [apiKey, setApiKey] = useState(apiKeyProp)
   const [selectedChains, setSelectedChains] = useState<string[]>(['base-sepolia:USDC'])
+  const [autoImportAddress, setAutoImportAddress] = useState(true)
+  const [amountMode, setAmountMode] = useState<'exact' | 'auto'>('auto')
   const [plans, setPlans] = useState<PlanState>({})
   const [merchantBusy, setMerchantBusy] = useState<MerchantActionKey>(null)
   const [merchantError, setMerchantError] = useState<string | null>(null)
@@ -123,10 +126,7 @@ export function Subscription({
     [],
   )
   const chains = useMemo(() => selectedSubscriptionChains(selectedChains), [selectedChains])
-  const acceptedAssets = useMemo(
-    () => selectedSubscriptionAssets(selectedChains),
-    [selectedChains],
-  )
+  const acceptedAssets = useMemo(() => selectedSubscriptionAssets(selectedChains), [selectedChains])
   const starterPlan = plans.starter
   const proPlan = plans.pro
   const planNameById = useMemo(() => {
@@ -253,7 +253,7 @@ export function Subscription({
 
   async function createSubscription(user: DemoUserState) {
     await runUser(user, 'subscription', async () => {
-      if (!plans.starter) throw new Error('starter plan is not ready')
+      if (!plans.starter) throw new Error(copy.starterPlanNotReady())
       const result = await client().merchantSubscriptions.subscriptions.create(
         { planId: plans.starter.id, merchantUserId: user.merchantUserId },
         { idempotencyKey: `sub_${user.merchantUserId}` },
@@ -293,28 +293,44 @@ export function Subscription({
 
   async function openCheckout(user: DemoUserState) {
     await runUser(user, 'checkout', async () => {
-      if (!user.portalToken) throw new Error('portal session is not ready')
+      if (!user.portalToken) throw new Error(copy.portalSessionNotReady())
       const invoice = user.openInvoice ?? (await refreshOpenInvoice(user))
       if (!invoice) throw new Error(copy.noOpenInvoice())
 
-      await importSandboxAddress({
-        apiKey: apiKey.trim(),
-        baseUrl,
-        merchantOrderId: buildInvoiceAddressSeed(user.merchantUserId, invoice.id),
-        chains,
-      })
+      if (autoImportAddress) {
+        try {
+          await importSandboxAddress({
+            apiKey: apiKey.trim(),
+            baseUrl,
+            merchantOrderId: buildInvoiceAddressSeed(user.merchantUserId, invoice.id),
+            chains,
+          })
+        } catch {
+          /* 地址自举失败不阻断，checkout 建单会返回准确错误。 */
+        }
+      }
 
       const currentUrl = new URL(window.location.href)
       currentUrl.search = ''
 
-      const session = await client()
-        .portal(user.portalToken)
-        .invoices.checkoutSession(invoice.id, {
-          acceptedAssets,
-          successUrl: `${currentUrl.toString()}?result=success`,
-          cancelUrl: `${currentUrl.toString()}?result=canceled`,
-          walletConnectProjectId,
-        })
+      let session: MerchantInvoiceCheckoutSession
+      try {
+        session = await client()
+          .portal(user.portalToken)
+          .invoices.checkoutSession(invoice.id, {
+            acceptedAssets,
+            amountMode,
+            successUrl: `${currentUrl.toString()}?result=success`,
+            cancelUrl: `${currentUrl.toString()}?result=canceled`,
+            walletConnectProjectId,
+          })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : copy.unknownError()
+        if (!autoImportAddress && /no available address/i.test(message)) {
+          throw new Error(`${message}\n${copy.noAddressHint()}`)
+        }
+        throw err
+      }
 
       pushUserLog(user.id, 'checkout session created')
 
@@ -329,7 +345,7 @@ export function Subscription({
       ? ({ id: invoiceId, status: 'open' } as EndUserInvoice)
       : (user.openInvoice ?? (await refreshOpenInvoice(user)))
     if (!invoice) throw new Error(copy.noOpenInvoice())
-    if (!user.portalToken) throw new Error('portal session is not ready')
+    if (!user.portalToken) throw new Error(copy.portalSessionNotReady())
 
     const portal = client().portal(user.portalToken)
     const status = await portal.invoices.paymentStatus(invoice.id)
@@ -378,8 +394,8 @@ export function Subscription({
     targetPlan: MerchantPlan | undefined,
   ) {
     await runUser(user, key, async () => {
-      if (!targetPlan) throw new Error('target plan is not ready')
-      if (!user.portalToken) throw new Error('portal session is not ready')
+      if (!targetPlan) throw new Error(copy.targetPlanNotReady())
+      if (!user.portalToken) throw new Error(copy.portalSessionNotReady())
 
       const result = await client().portal(user.portalToken).subscription.changePlan({
         planId: targetPlan.id,
@@ -429,14 +445,42 @@ export function Subscription({
               className="font-mono"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="subscription-chains">{copy.chainAssets()}</Label>
-            <MultiSelect
-              id="subscription-chains"
-              options={chainOptions}
-              value={selectedChains}
-              onChange={setSelectedChains}
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="subscription-chains">{copy.chainAssets()}</Label>
+              <MultiSelect
+                id="subscription-chains"
+                options={chainOptions}
+                value={selectedChains}
+                onChange={setSelectedChains}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subscription-amount-mode">{copy.amountMode()}</Label>
+              <MultiSelect
+                id="subscription-amount-mode"
+                options={[
+                  { value: 'auto', label: copy.amountModeAuto() },
+                  { value: 'exact', label: copy.amountModeExact() },
+                ]}
+                value={[amountMode]}
+                onChange={(next) => {
+                  const selected = next[next.length - 1]
+                  if (selected === 'auto' || selected === 'exact') setAmountMode(selected)
+                }}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={autoImportAddress}
+                onChange={(event) => setAutoImportAddress(event.target.checked)}
+              />
+              <span className="font-medium">{copy.autoImport()}</span>
+            </label>
+            <p className="pl-6 text-xs text-muted-foreground">{copy.autoImportHint()}</p>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">

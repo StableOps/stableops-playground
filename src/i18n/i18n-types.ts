@@ -447,6 +447,26 @@ type RootTranslation = {
 		 */
 		chainAssets: string
 		/**
+		 * A​m​o​u​n​t​ ​m​o​d​e
+		 */
+		amountMode: string
+		/**
+		 * E​X​A​C​T
+		 */
+		amountModeExact: string
+		/**
+		 * A​U​T​O
+		 */
+		amountModeAuto: string
+		/**
+		 * A​u​t​o​-​i​m​p​o​r​t​ ​s​a​n​d​b​o​x​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s
+		 */
+		autoImport: string
+		/**
+		 * W​h​e​n​ ​o​n​,​ ​a​ ​d​e​t​e​r​m​i​n​i​s​t​i​c​ ​b​u​r​n​e​r​ ​s​a​n​d​b​o​x​ ​a​d​d​r​e​s​s​ ​i​s​ ​i​m​p​o​r​t​e​d​ ​f​o​r​ ​t​h​i​s​ ​i​n​v​o​i​c​e​ ​c​h​e​c​k​o​u​t​ ​b​e​f​o​r​e​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​i​s​ ​c​r​e​a​t​e​d​.​ ​U​s​e​f​u​l​ ​w​h​e​n​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​a​d​d​r​e​s​s​e​s​ ​y​e​t​.​ ​T​u​r​n​ ​i​t​ ​o​f​f​ ​t​o​ ​u​s​e​ ​o​n​l​y​ ​t​h​e​ ​a​d​d​r​e​s​s​e​s​ ​y​o​u​ ​m​a​n​a​g​e​ ​y​o​u​r​s​e​l​f​.
+		 */
+		autoImportHint: string
+		/**
 		 * A​d​d​ ​u​s​e​r
 		 */
 		addUser: string
@@ -508,6 +528,22 @@ type RootTranslation = {
 		 * N​o​ ​o​p​e​n​ ​i​n​v​o​i​c​e​ ​i​s​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​p​a​y​m​e​n​t​.
 		 */
 		noOpenInvoice: string
+		/**
+		 * t​i​p​:​ ​i​f​ ​t​h​i​s​ ​f​a​i​l​e​d​ ​b​e​c​a​u​s​e​ ​y​o​u​r​ ​o​r​g​ ​h​a​s​ ​n​o​ ​r​e​c​e​i​v​i​n​g​ ​a​d​d​r​e​s​s​,​ ​e​n​a​b​l​e​ ​A​u​t​o​-​i​m​p​o​r​t​ ​a​b​o​v​e​ ​o​r​ ​c​r​e​a​t​e​ ​o​n​e​ ​i​n​ ​D​a​s​h​b​o​a​r​d​ ​→​ ​A​d​d​r​e​s​s​e​s​.
+		 */
+		noAddressHint: string
+		/**
+		 * S​t​a​r​t​e​r​ ​p​l​a​n​ ​i​s​ ​n​o​t​ ​r​e​a​d​y​.
+		 */
+		starterPlanNotReady: string
+		/**
+		 * P​o​r​t​a​l​ ​s​e​s​s​i​o​n​ ​i​s​ ​n​o​t​ ​r​e​a​d​y​.
+		 */
+		portalSessionNotReady: string
+		/**
+		 * T​a​r​g​e​t​ ​p​l​a​n​ ​i​s​ ​n​o​t​ ​r​e​a​d​y​.
+		 */
+		targetPlanNotReady: string
 		/**
 		 * O​p​e​n​ ​C​h​e​c​k​o​u​t
 		 */
@@ -928,6 +964,26 @@ export type TranslationFunctions = {
 		 */
 		chainAssets: () => LocalizedString
 		/**
+		 * Amount mode
+		 */
+		amountMode: () => LocalizedString
+		/**
+		 * EXACT
+		 */
+		amountModeExact: () => LocalizedString
+		/**
+		 * AUTO
+		 */
+		amountModeAuto: () => LocalizedString
+		/**
+		 * Auto-import sandbox receiving address
+		 */
+		autoImport: () => LocalizedString
+		/**
+		 * When on, a deterministic burner sandbox address is imported for this invoice checkout before the session is created. Useful when your org has no addresses yet. Turn it off to use only the addresses you manage yourself.
+		 */
+		autoImportHint: () => LocalizedString
+		/**
 		 * Add user
 		 */
 		addUser: () => LocalizedString
@@ -987,6 +1043,22 @@ export type TranslationFunctions = {
 		 * No open invoice is available for payment.
 		 */
 		noOpenInvoice: () => LocalizedString
+		/**
+		 * tip: if this failed because your org has no receiving address, enable Auto-import above or create one in Dashboard → Addresses.
+		 */
+		noAddressHint: () => LocalizedString
+		/**
+		 * Starter plan is not ready.
+		 */
+		starterPlanNotReady: () => LocalizedString
+		/**
+		 * Portal session is not ready.
+		 */
+		portalSessionNotReady: () => LocalizedString
+		/**
+		 * Target plan is not ready.
+		 */
+		targetPlanNotReady: () => LocalizedString
 		/**
 		 * Open Checkout
 		 */

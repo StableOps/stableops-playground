@@ -61,6 +61,27 @@ describe('subscription playground UI', () => {
     expect(source).not.toContain('copy.chains()')
   })
 
+  it('exposes sandbox address import and amount mode controls for invoice checkout', () => {
+    expect(source).toContain('const [autoImportAddress, setAutoImportAddress] = useState(true)')
+    expect(source).toContain('const [amountMode, setAmountMode] = useState<')
+    expect(source).toContain('type="checkbox"')
+    expect(source).toContain('checked={autoImportAddress}')
+    expect(source).toContain('copy.autoImport()')
+    expect(source).toContain('copy.noAddressHint()')
+    expect(source).toContain('copy.amountMode()')
+    expect(source).toContain('amountMode,')
+    expect(source).toContain('if (autoImportAddress) {')
+  })
+
+  it('localizes known subscription demo errors', () => {
+    expect(source).toContain('copy.starterPlanNotReady()')
+    expect(source).toContain('copy.portalSessionNotReady()')
+    expect(source).toContain('copy.targetPlanNotReady()')
+    expect(source).not.toContain("throw new Error('starter plan is not ready')")
+    expect(source).not.toContain("throw new Error('portal session is not ready')")
+    expect(source).not.toContain("throw new Error('target plan is not ready')")
+  })
+
   it('uses plan data for plan labels and hides summaries before plans exist', () => {
     expect(source).toContain('copy.upgradeTo({ plan:')
     expect(source).toContain('copy.downgradeTo({ plan:')
