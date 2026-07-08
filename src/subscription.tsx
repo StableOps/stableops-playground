@@ -16,6 +16,7 @@ import {
   buildInvoiceAddressSeed,
   demoSubscriptionPlans,
   findOpenInvoice,
+  selectedSubscriptionAssets,
   selectedSubscriptionChains,
   subscriptionChainOptions,
   subscriptionGroupKey,
@@ -122,6 +123,10 @@ export function Subscription({
     [],
   )
   const chains = useMemo(() => selectedSubscriptionChains(selectedChains), [selectedChains])
+  const acceptedAssets = useMemo(
+    () => selectedSubscriptionAssets(selectedChains),
+    [selectedChains],
+  )
   const starterPlan = plans.starter
   const proPlan = plans.pro
   const planNameById = useMemo(() => {
@@ -225,10 +230,6 @@ export function Subscription({
       }
 
       setPlans(next)
-      await stableops.merchantSubscriptions.settings.update(
-        { acceptedChains: chains, paymentAmountMode: 'auto' },
-        { idempotencyKey: 'subscription_demo_settings' },
-      )
     })
   }
 
@@ -309,6 +310,7 @@ export function Subscription({
       const session = await client()
         .portal(user.portalToken)
         .invoices.checkoutSession(invoice.id, {
+          acceptedAssets,
           successUrl: `${currentUrl.toString()}?result=success`,
           cancelUrl: `${currentUrl.toString()}?result=canceled`,
           walletConnectProjectId,

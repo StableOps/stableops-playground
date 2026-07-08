@@ -60,3 +60,10 @@ export function selectedSubscriptionChains(values: readonly string[]): ChainId[]
     ),
   )
 }
+
+export function selectedSubscriptionAssets(values: readonly string[]) {
+  return values
+    .map((value) => subscriptionChainOptions.find((option) => option.value === value))
+    .filter((option): option is (typeof subscriptionChainOptions)[number] => Boolean(option))
+    .map((option) => ({ chain: option.chain, asset: option.asset }))
+}
