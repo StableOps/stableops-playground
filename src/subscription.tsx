@@ -217,13 +217,11 @@ export function Subscription({
 
       for (const planInput of demoSubscriptionPlans) {
         const found = existing.find((plan) => plan.code === planInput.code)
-        const plan = found
-          ? await stableops.merchantSubscriptions.plans.update(found.id, planInput, {
-              idempotencyKey: `plan_${planInput.code}`,
-            })
-          : await stableops.merchantSubscriptions.plans.create(planInput, {
-              idempotencyKey: `plan_${planInput.code}`,
-            })
+        const plan =
+          found ??
+          (await stableops.merchantSubscriptions.plans.create(planInput, {
+            idempotencyKey: `plan_${planInput.code}`,
+          }))
 
         if (plan.code === 'demo_starter') next.starter = plan
         if (plan.code === 'demo_pro') next.pro = plan

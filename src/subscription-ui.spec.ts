@@ -91,6 +91,11 @@ describe('subscription playground UI', () => {
     expect(source).not.toContain('copy.proPlan()')
   })
 
+  it('reuses existing demo plans without updating them', () => {
+    expect(source).toContain('found ??')
+    expect(source).not.toContain('merchantSubscriptions.plans.update')
+  })
+
   it('disables completed subscription actions without blocking later steps', () => {
     expect(source).toContain('const subscriptionReady =')
     expect(source).toContain('const createSubscriptionDisabled =')
