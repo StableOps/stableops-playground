@@ -26,6 +26,7 @@ import { isAcceptedOrderStatus, isFailedTerminalOrderStatus, type WaitTarget } f
 import type { PlaygroundTestnet } from './testnets'
 import type { Step } from './ui-bits'
 import type { TranslationFunctions } from './i18n/i18n-types.js'
+import { formatLocalClock } from './time'
 import { createConfirmationProgressGuard } from './wallet-confirmation-guard'
 import {
   resolveWalletPollSignal,
@@ -107,7 +108,7 @@ export function usePlaygroundState(input: UsePlaygroundStateInput): UsePlaygroun
   const [busy, setBusy] = useState<null | string>(null)
 
   const append = useCallback((line: string) => {
-    setLog((prev) => [...prev, `${new Date().toISOString().slice(11, 19)}  ${line}`])
+    setLog((prev) => [...prev, `${formatLocalClock(new Date())}  ${line}`])
   }, [])
 
   const updateStep = useCallback((index: number, patch: Partial<Step>) => {

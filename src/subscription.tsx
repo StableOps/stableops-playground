@@ -12,6 +12,7 @@ import {
 import { Button, Input, Label, MultiSelect } from './ui'
 import { Spinner } from './ui-bits'
 import { importSandboxAddress } from './sandbox-address'
+import { formatLocalClock, formatLocalTime } from './time'
 import {
   buildDemoMerchantUserId,
   buildInvoiceAddressSeed,
@@ -148,7 +149,7 @@ export function Subscription({
   }
 
   function pushUserLog(userId: string, label: string) {
-    const at = new Date().toISOString().slice(11, 19)
+    const at = formatLocalClock(new Date())
     const line = `${at}  ${label}`
     updateUser(userId, (user) => ({ ...user, log: [...user.log, line].slice(-12) }))
   }
@@ -708,9 +709,7 @@ function formatInvoiceSummary(invoice: EndUserInvoice | null) {
 }
 
 function formatDateTime(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+  return formatLocalTime(value)
 }
 
 function SummaryTile({ label, value }: { label: string; value: string }) {

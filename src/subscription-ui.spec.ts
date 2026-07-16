@@ -16,7 +16,7 @@ describe('subscription playground UI', () => {
   it('renders plain text logs inside each user box', () => {
     expect(source).toContain('type LogEntry = string')
     expect(source).toContain('user.log.join')
-    expect(source).toContain("new Date().toISOString().slice(11, 19)")
+    expect(source).toContain('formatLocalClock(new Date())')
     expect(source).toContain('`${at}  ${label}')
   })
 
