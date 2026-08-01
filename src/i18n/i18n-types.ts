@@ -553,6 +553,88 @@ type RootTranslation = {
 		 */
 		unknownError: string
 	}
+	x402: {
+		/**
+		 * x​4​0​2​ ​p​a​i​d​ ​r​e​s​o​u​r​c​e
+		 */
+		title: string
+		/**
+		 * R​e​q​u​e​s​t​ ​t​h​e​ ​s​a​n​d​b​o​x​ ​r​e​s​o​u​r​c​e​ ​a​n​d​ ​i​n​s​p​e​c​t​ ​t​h​e​ ​r​e​a​l​ ​H​T​T​P​ ​4​0​2​ ​c​h​a​l​l​e​n​g​e​ ​b​e​f​o​r​e​ ​c​o​n​n​e​c​t​i​n​g​ ​y​o​u​r​ ​A​g​e​n​t​.
+		 */
+		description: string
+		/**
+		 * R​e​s​o​u​r​c​e​ ​U​R​L
+		 */
+		resourceUrl: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​t​h​e​ ​U​R​L​ ​y​o​u​r​ ​A​g​e​n​t​ ​s​h​o​u​l​d​ ​p​a​s​s​ ​t​o​ ​x​4​0​2​F​e​t​c​h​.
+		 */
+		resourceUrlHint: string
+		/**
+		 * R​e​q​u​e​s​t​ ​4​0​2​ ​c​h​a​l​l​e​n​g​e
+		 */
+		request: string
+		/**
+		 * R​e​q​u​e​s​t​i​n​g​…
+		 */
+		requesting: string
+		/**
+		 * C​o​p​y​ ​U​R​L
+		 */
+		copy: string
+		/**
+		 * C​o​p​i​e​d
+		 */
+		copied: string
+		/**
+		 * S​a​n​d​b​o​x​ ​o​n​l​y​ ​·​ ​B​a​s​e​ ​S​e​p​o​l​i​a​ ​·​ ​U​S​D​C​ ​·​ ​e​x​a​c​t​ ​·​ ​G​E​T
+		 */
+		sandbox: string
+		/**
+		 * R​e​s​p​o​n​s​e
+		 */
+		response: string
+		/**
+		 * P​A​Y​M​E​N​T​-​R​E​Q​U​I​R​E​D​ ​h​e​a​d​e​r
+		 */
+		paymentRequired: string
+		/**
+		 * D​e​c​o​d​e​d​ ​p​a​y​m​e​n​t​ ​r​e​q​u​i​r​e​m​e​n​t​s
+		 */
+		decoded: string
+		/**
+		 * R​e​s​p​o​n​s​e​ ​b​o​d​y
+		 */
+		body: string
+		/**
+		 * T​h​e​ ​r​e​s​p​o​n​s​e​ ​d​i​d​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​a​ ​P​A​Y​M​E​N​T​-​R​E​Q​U​I​R​E​D​ ​h​e​a​d​e​r​.
+		 */
+		noHeader: string
+		/**
+		 * T​h​e​ ​r​e​s​o​u​r​c​e​ ​d​i​d​ ​n​o​t​ ​r​e​t​u​r​n​ ​4​0​2​.​ ​C​h​e​c​k​ ​t​h​e​ ​e​n​d​p​o​i​n​t​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+		 */
+		not402: string
+		/**
+		 * R​e​q​u​e​s​t​ ​f​a​i​l​e​d
+		 */
+		requestError: string
+		/**
+		 * T​h​i​s​ ​p​a​g​e​ ​o​n​l​y​ ​i​n​s​p​e​c​t​s​ ​t​h​e​ ​s​e​l​l​e​r​ ​c​h​a​l​l​e​n​g​e​.​ ​U​s​e​ ​@​s​t​a​b​l​e​o​p​s​/​a​g​e​n​t​-​s​d​k​ ​a​n​d​ ​y​o​u​r​ ​s​i​g​n​e​r​ ​s​i​d​e​c​a​r​ ​t​o​ ​c​o​m​p​l​e​t​e​ ​t​h​e​ ​p​a​y​m​e​n​t​.
+		 */
+		agentHint: string
+		/**
+		 * N​o​t​ ​r​e​q​u​e​s​t​e​d
+		 */
+		idle: string
+		/**
+		 * C​h​a​l​l​e​n​g​e​ ​r​e​c​e​i​v​e​d
+		 */
+		success: string
+		/**
+		 * E​r​r​o​r
+		 */
+		error: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -1067,6 +1149,88 @@ export type TranslationFunctions = {
 		 * unknown error
 		 */
 		unknownError: () => LocalizedString
+	}
+	x402: {
+		/**
+		 * x402 paid resource
+		 */
+		title: () => LocalizedString
+		/**
+		 * Request the sandbox resource and inspect the real HTTP 402 challenge before connecting your Agent.
+		 */
+		description: () => LocalizedString
+		/**
+		 * Resource URL
+		 */
+		resourceUrl: () => LocalizedString
+		/**
+		 * This is the URL your Agent should pass to x402Fetch.
+		 */
+		resourceUrlHint: () => LocalizedString
+		/**
+		 * Request 402 challenge
+		 */
+		request: () => LocalizedString
+		/**
+		 * Requesting…
+		 */
+		requesting: () => LocalizedString
+		/**
+		 * Copy URL
+		 */
+		copy: () => LocalizedString
+		/**
+		 * Copied
+		 */
+		copied: () => LocalizedString
+		/**
+		 * Sandbox only · Base Sepolia · USDC · exact · GET
+		 */
+		sandbox: () => LocalizedString
+		/**
+		 * Response
+		 */
+		response: () => LocalizedString
+		/**
+		 * PAYMENT-REQUIRED header
+		 */
+		paymentRequired: () => LocalizedString
+		/**
+		 * Decoded payment requirements
+		 */
+		decoded: () => LocalizedString
+		/**
+		 * Response body
+		 */
+		body: () => LocalizedString
+		/**
+		 * The response did not include a PAYMENT-REQUIRED header.
+		 */
+		noHeader: () => LocalizedString
+		/**
+		 * The resource did not return 402. Check the endpoint configuration.
+		 */
+		not402: () => LocalizedString
+		/**
+		 * Request failed
+		 */
+		requestError: () => LocalizedString
+		/**
+		 * This page only inspects the seller challenge. Use @stableops/agent-sdk and your signer sidecar to complete the payment.
+		 */
+		agentHint: () => LocalizedString
+		/**
+		 * Not requested
+		 */
+		idle: () => LocalizedString
+		/**
+		 * Challenge received
+		 */
+		success: () => LocalizedString
+		/**
+		 * Error
+		 */
+		error: () => LocalizedString
 	}
 }
 

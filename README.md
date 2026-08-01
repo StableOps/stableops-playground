@@ -63,6 +63,28 @@ export function Demo() {
 In a React Server Components host (e.g. Next.js App Router), render it from a
 client component (a file with `"use client"`).
 
+## Inspecting an x402 sandbox resource
+
+The package also exports `<X402Resource>` to request a paid resource and inspect the real
+`402` response, `PAYMENT-REQUIRED` header, and decoded payment requirements:
+
+```tsx
+import { X402Resource } from '@stableops/playground'
+
+export function X402Demo() {
+  return (
+    <X402Resource
+      resourceUrl="/api/x402/sandbox-resource"
+      locale="en"
+    />
+  )
+}
+```
+
+If the browser cannot access the resource directly, pass a same-origin proxy URL through
+`requestUrl`. The component only inspects the seller challenge; it does not store a private key
+or complete an Agent payment in the browser.
+
 ## Props
 
 | Prop                     | Type           | Default                     | Description                                                                                         |
