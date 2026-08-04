@@ -90,28 +90,32 @@ export function X402Resource({
       <div className="mt-5 space-y-2">
         <Label htmlFor="x402-resource-url">{text.resourceUrl()}</Label>
         <div className="flex gap-2">
-          <Input
-            id="x402-resource-url"
-            value={resourceUrl}
-            onChange={(event) => setResourceUrl(event.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-            readOnly={Boolean(requestUrl)}
-            className="font-mono text-xs"
-          />
-          <CopyButton value={resourceUrl} copyLabel={text.copy()} copiedLabel={text.copied()} />
+          <div className="relative min-w-0 flex-1">
+            <Input
+              id="x402-resource-url"
+              value={resourceUrl}
+              onChange={(event) => setResourceUrl(event.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              readOnly={Boolean(requestUrl)}
+              className="pr-10 font-mono text-xs"
+            />
+            <CopyButton
+              value={resourceUrl}
+              copyLabel={text.copy()}
+              copiedLabel={text.copied()}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2"
+            />
+          </div>
+          <Button
+            type="button"
+            disabled={requestState.status === 'loading'}
+            onClick={() => void requestChallenge()}>
+            {requestState.status === 'loading' && <Spinner className="size-4" />}
+            {requestState.status === 'loading' ? text.requesting() : text.request()}
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground">{text.resourceUrlHint()}</p>
-      </div>
-
-      <div className="mt-4">
-        <Button
-          type="button"
-          disabled={requestState.status === 'loading'}
-          onClick={() => void requestChallenge()}>
-          {requestState.status === 'loading' && <Spinner className="size-4" />}
-          {requestState.status === 'loading' ? text.requesting() : text.request()}
-        </Button>
       </div>
 
       {requestState.status === 'error' ? (

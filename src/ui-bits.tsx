@@ -2,8 +2,9 @@
 
 import { useCallback, useState } from 'react'
 
-import { Badge, Button } from './ui'
-import { Loader2 } from 'lucide-react'
+import { Check, Copy, Loader2 } from 'lucide-react'
+
+import { Badge, cn } from './ui'
 
 export type Step = {
   label: string
@@ -13,15 +14,17 @@ export type Step = {
   link?: { href: string; label: string }
 }
 
-// 收款地址旁的复制按钮：写入剪贴板后短暂显示「已复制」再回落。
+// 内联复制按钮：样式与 Web 端一致，复制后短暂显示对勾反馈。
 export function CopyButton({
   value,
   copyLabel,
   copiedLabel,
+  className,
 }: {
   value: string
   copyLabel: string
   copiedLabel: string
+  className?: string
 }) {
   const [copied, setCopied] = useState(false)
   const onCopy = useCallback(async () => {
@@ -34,9 +37,21 @@ export function CopyButton({
     }
   }, [value])
   return (
-    <Button size="sm" variant="outline" onClick={onCopy} className="shrink-0">
-      {copied ? copiedLabel : copyLabel}
-    </Button>
+    <button
+      type="button"
+      onClick={onCopy}
+      aria-label={copied ? copiedLabel : copyLabel}
+      title={copied ? copiedLabel : copyLabel}
+      className={cn(
+        'inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+        className,
+      )}>
+      {copied ? (
+        <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+      ) : (
+        <Copy className="size-3.5" />
+      )}
+    </button>
   )
 }
 
