@@ -79,17 +79,6 @@ export function X402Resource({
     }
   }
 
-  const statusLabel =
-    requestState.status === 'idle'
-      ? text.idle()
-      : requestState.status === 'loading'
-        ? text.requesting()
-        : requestState.status === 'error'
-          ? text.error()
-          : requestState.statusCode === 402
-            ? text.success()
-            : text.not402()
-
   return (
     <div className={cn('rounded-lg border bg-muted/20 p-4', className)}>
       <div className="space-y-1">
@@ -115,7 +104,7 @@ export function X402Resource({
         <p className="text-xs text-muted-foreground">{text.resourceUrlHint()}</p>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="mt-4">
         <Button
           type="button"
           disabled={requestState.status === 'loading'}
@@ -123,9 +112,6 @@ export function X402Resource({
           {requestState.status === 'loading' && <Spinner className="size-4" />}
           {requestState.status === 'loading' ? text.requesting() : text.request()}
         </Button>
-        <Badge variant={requestState.status === 'error' ? 'destructive' : 'outline'}>
-          {statusLabel}
-        </Badge>
       </div>
 
       {requestState.status === 'error' ? (
