@@ -555,11 +555,11 @@ type RootTranslation = {
 	}
 	x402: {
 		/**
-		 * x​4​0​2​ ​p​a​i​d​ ​r​e​s​o​u​r​c​e
+		 * O​n​l​i​n​e​ ​x​4​0​2​ ​t​e​s​t
 		 */
 		title: string
 		/**
-		 * R​e​q​u​e​s​t​ ​t​h​e​ ​s​a​n​d​b​o​x​ ​r​e​s​o​u​r​c​e​ ​a​n​d​ ​i​n​s​p​e​c​t​ ​t​h​e​ ​r​e​a​l​ ​H​T​T​P​ ​4​0​2​ ​c​h​a​l​l​e​n​g​e​ ​b​e​f​o​r​e​ ​c​o​n​n​e​c​t​i​n​g​ ​y​o​u​r​ ​A​g​e​n​t​.
+		 * R​e​q​u​e​s​t​ ​t​h​e​ ​r​e​s​o​u​r​c​e​ ​U​R​L​ ​y​o​u​ ​e​n​t​e​r​ ​a​n​d​ ​i​n​s​p​e​c​t​ ​t​h​e​ ​H​T​T​P​ ​4​0​2​ ​p​a​y​m​e​n​t​ ​c​h​a​l​l​e​n​g​e​ ​i​t​ ​a​c​t​u​a​l​l​y​ ​r​e​t​u​r​n​s​.
 		 */
 		description: string
 		/**
@@ -586,10 +586,6 @@ type RootTranslation = {
 		 * C​o​p​i​e​d
 		 */
 		copied: string
-		/**
-		 * S​a​n​d​b​o​x​ ​o​n​l​y​ ​·​ ​B​a​s​e​ ​S​e​p​o​l​i​a​ ​·​ ​U​S​D​C​ ​·​ ​e​x​a​c​t​ ​·​ ​G​E​T
-		 */
-		sandbox: string
 		/**
 		 * R​e​s​p​o​n​s​e
 		 */
@@ -1152,11 +1148,11 @@ export type TranslationFunctions = {
 	}
 	x402: {
 		/**
-		 * x402 paid resource
+		 * Online x402 test
 		 */
 		title: () => LocalizedString
 		/**
-		 * Request the sandbox resource and inspect the real HTTP 402 challenge before connecting your Agent.
+		 * Request the resource URL you enter and inspect the HTTP 402 payment challenge it actually returns.
 		 */
 		description: () => LocalizedString
 		/**
@@ -1183,10 +1179,6 @@ export type TranslationFunctions = {
 		 * Copied
 		 */
 		copied: () => LocalizedString
-		/**
-		 * Sandbox only · Base Sepolia · USDC · exact · GET
-		 */
-		sandbox: () => LocalizedString
 		/**
 		 * Response
 		 */

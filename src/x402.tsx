@@ -84,7 +84,6 @@ export function X402Resource({
       <div className="space-y-1">
         <h3 className="text-lg font-semibold">{text.title()}</h3>
         <p className="text-sm text-muted-foreground">{text.description()}</p>
-        <p className="pt-1 text-xs text-muted-foreground">{text.sandbox()}</p>
       </div>
 
       <div className="mt-5 space-y-2">

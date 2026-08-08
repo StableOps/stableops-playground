@@ -164,16 +164,15 @@ const en = {
     unknownError: 'unknown error',
   },
   x402: {
-    title: 'x402 paid resource',
+    title: 'Online x402 test',
     description:
-      'Request the sandbox resource and inspect the real HTTP 402 challenge before connecting your Agent.',
+      'Request the resource URL you enter and inspect the HTTP 402 payment challenge it actually returns.',
     resourceUrl: 'Resource URL',
     resourceUrlHint: 'This is the URL your Agent should pass to x402Fetch.',
     request: 'Request 402 challenge',
     requesting: 'Requesting…',
     copy: 'Copy URL',
     copied: 'Copied',
-    sandbox: 'Sandbox only · Base Sepolia · USDC · exact · GET',
     response: 'Response',
     paymentRequired: 'PAYMENT-REQUIRED header',
     decoded: 'Decoded payment requirements',
