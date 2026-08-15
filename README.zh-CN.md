@@ -55,27 +55,6 @@ export function Demo() {
 在 React Server Components 宿主（如 Next.js App Router）中，请从 client 组件
 （带 `"use client"` 的文件）渲染它。
 
-## 检查 x402 沙盒资源
-
-包还导出 `<X402Resource>`，用于请求一个收费资源并查看真实的 `402` 响应、
-`PAYMENT-REQUIRED` 响应头和解码后的付款要求：
-
-```tsx
-import { X402Resource } from '@stableops/playground'
-
-export function X402Demo() {
-  return (
-    <X402Resource
-      resourceUrl="/api/x402/sandbox-resource"
-      locale="zh"
-    />
-  )
-}
-```
-
-如果浏览器无法直接访问资源，可以通过 `requestUrl` 传入同源代理地址。这个组件只检查
-卖方挑战，不在浏览器中保存私钥或完成 Agent 付款。
-
 ## Props
 
 | Prop                     | 类型           | 默认值                      | 说明                                                                            |

@@ -11,7 +11,3 @@ export type { ImportSandboxAddressInput } from './sandbox-address'
 
 export { Subscription } from './subscription'
 export type { SubscriptionProps } from './subscription'
-
-// x402 沙盒资源检查组件：请求真实 402 挑战，便于接入 Agent 前验证收费端点。
-export { DEFAULT_X402_RESOURCE_URL, X402Resource } from './x402'
-export type { X402ResourceProps } from './x402'

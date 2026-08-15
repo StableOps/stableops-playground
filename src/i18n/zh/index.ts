@@ -159,27 +159,6 @@ const zh = {
     openCheckout: '打开收银台',
     unknownError: '未知错误',
   },
-  x402: {
-    title: '在线 x402 测试',
-    description: '请求你填入的资源地址，查看它实际返回的 HTTP 402 付款挑战。',
-    resourceUrl: '资源地址',
-    resourceUrlHint: '这是 Agent 传给 x402Fetch 的地址。',
-    request: '请求 402 挑战',
-    requesting: '请求中…',
-    copy: '复制地址',
-    copied: '已复制',
-    response: '响应结果',
-    paymentRequired: 'PAYMENT-REQUIRED 响应头',
-    decoded: '解码后的付款要求',
-    body: '响应正文',
-    noHeader: '响应没有包含 PAYMENT-REQUIRED 响应头。',
-    not402: '资源没有返回 402，请检查端点配置。',
-    requestError: '请求失败',
-    agentHint: '此页面只检查卖方的付款挑战；实际付款请使用 @stableops/agent-sdk 和签名器 Sidecar。',
-    idle: '尚未请求',
-    success: '已收到付款挑战',
-    error: '错误',
-  },
 } satisfies Translation
 
 export default zh

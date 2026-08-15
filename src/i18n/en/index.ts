@@ -163,29 +163,6 @@ const en = {
     openCheckout: 'Open Checkout',
     unknownError: 'unknown error',
   },
-  x402: {
-    title: 'Online x402 test',
-    description:
-      'Request the resource URL you enter and inspect the HTTP 402 payment challenge it actually returns.',
-    resourceUrl: 'Resource URL',
-    resourceUrlHint: 'This is the URL your Agent should pass to x402Fetch.',
-    request: 'Request 402 challenge',
-    requesting: 'Requesting…',
-    copy: 'Copy URL',
-    copied: 'Copied',
-    response: 'Response',
-    paymentRequired: 'PAYMENT-REQUIRED header',
-    decoded: 'Decoded payment requirements',
-    body: 'Response body',
-    noHeader: 'The response did not include a PAYMENT-REQUIRED header.',
-    not402: 'The resource did not return 402. Check the endpoint configuration.',
-    requestError: 'Request failed',
-    agentHint:
-      'This page only inspects the seller challenge. Use @stableops/agent-sdk and your signer sidecar to complete the payment.',
-    idle: 'Not requested',
-    success: 'Challenge received',
-    error: 'Error',
-  },
 } satisfies BaseTranslation
 
 export default en
