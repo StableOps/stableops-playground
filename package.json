@@ -33,7 +33,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "i18n": "typesafe-i18n --no-watch",
     "prepublishOnly": "pnpm build",
     "lint": "eslint .",
