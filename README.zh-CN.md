@@ -1,50 +1,52 @@
 # StableOps Playground
 
-[English](./README.md)
+[查看英文说明](./README.md)
 
-`@stableops/playground` 提供一个自包含的 `<Playground>` 组件，**直接在浏览器里**
-走完一笔 StableOps 支付单的完整生命周期：创建订单 → 钱包链上支付 → 等待
-`confirmed` → 等待 `finalized`。它用 [`@stableops/api-sdk`](https://www.npmjs.com/package/@stableops/api-sdk) 建单与轮询，
-用 [`@stableops/wallet-sdk`](https://www.npmjs.com/package/@stableops/wallet-sdk) 唤起用户钱包发送真实测试网转账。
-无需服务端代理。调用方通过 prop 或组件内置输入框提供 API key。
+这是 StableOps 的公开示例仓库，用于演示沙盒接入，不发布到 npm。你可以克隆仓库运行示例，也可以复用其中的 React 源码。`@stableops/playground` 名称仅保留用于本地工作区引用。
 
-## 运行要求
+`@stableops/playground` 提供可嵌入 React 应用的沙盒演练组件。`Playground` 演示创建订单、钱包付款和付款状态查询。`Checkout` 演示托管收银台付款，`Subscription` 演示商户订阅与账单操作。
 
-- **浏览器**运行时。当「自动导入」开启且选用 TRON 链时，sandbox 地址派生会用
-  Web Crypto（`globalThis.crypto.subtle`）做 base58check 的 SHA-256；现代浏览器均原生支持。
-  其他链（EVM、Solana）不会用到 Web Crypto。
-- React 18 或 19（peer 依赖）。
-- 宿主需提供 Tailwind CSS v4 与 shadcn 设计变量（`--card`、`--muted`、`--primary` 等）。
-  组件用工具类渲染并读取这些 CSS 变量配色。请确保 Tailwind 扫描到本包，例如在全局样式里：
-  `@source '../node_modules/@stableops/playground/dist/**/*.js';`
-- 一个 StableOps **sandbox** API key（见「安全」）。
+这些组件直接在浏览器中调用 StableOps，只能使用沙盒 API 密钥。真实业务的 API 密钥应保留在后端，前端通过 `@stableops/wallet-sdk` 完成钱包转账。
 
-## 安全
+## 运行示例
 
-本组件是客户端 demo，会把你提供的 API key 直接从浏览器发往 StableOps API，因此：
-
-- **只使用 sandbox key。** 切勿在浏览器代码中嵌入生产 key。
-- API key 的环境是权威值。StableOps API 按 key 解析组织与环境，所以 sandbox key
-  始终运行在 sandbox。
-- 在生产集成里，请把 API key 放在后端，前端只用 `@stableops/wallet-sdk` 完成钱包转账。
-
-## 安装
+需要 Node.js 22.12 或更高版本，以及 pnpm 10.33.2。
 
 ```bash
-pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/universal-provider react react-dom
+git clone https://github.com/StableOps/stableops-playground.git
+cd stableops-playground
+pnpm install
+pnpm dev
 ```
+
+打开 http://localhost:5173，在界面中输入沙盒 API 密钥。示例已包含 Solana 和 TRON 所需依赖。启用 WalletConnect 时，在本地 `.env` 文件中设置 `VITE_WALLETCONNECT_PROJECT_ID`，然后启动示例。`VITE_STABLEOPS_API_URL` 和 `VITE_CHECKOUT_URL` 可分别覆盖默认 API 地址和托管收银台地址。
+
+运行 `pnpm build:example` 和 `pnpm preview` 可以检查构建后的示例。在 StableOps 主仓库中，从根目录运行 `pnpm --filter @stableops/playground dev`。
+
+## 复用组件
+
+需要 React 18 或 19、现代浏览器，以及提供 Tailwind CSS v4 和 shadcn 设计变量的宿主应用。示例已提供这些样式，你也可以将组件源码复制到自己的应用中。
+
+宿主应用需要引入一次 WalletConnect 样式文件，并让 Tailwind 扫描组件类名：
+
+```css
+@source './path/to/playground/src/**/*.{ts,tsx}';
+```
+
+Solana 付款需要 `@solana/web3.js`。TRON WalletConnect 付款需要 `tronweb` 和支持 `tron_signTransaction` 的钱包。EVM、Solana 和 TRON 均支持兼容的 WalletConnect 钱包，也可使用注入式钱包。
 
 ## 使用
 
 ```tsx
-import { Playground } from '@stableops/playground'
+'use client'
+
+import { Playground } from './src'
+import '@stableops/wallet-ui/walletconnect-dialog.css'
 
 export function Demo() {
   return (
     <Playground
-      // 可选默认 key；用户也可在 UI 里粘贴自己的 key。
       apiKey={process.env.NEXT_PUBLIC_STABLEOPS_SANDBOX_KEY}
-      baseUrl="https://api.stableops.dev"
       walletConnectProjectId={process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
       locale="zh"
     />
@@ -52,51 +54,62 @@ export function Demo() {
 }
 ```
 
-在 React Server Components 宿主（如 Next.js App Router）中，请从 client 组件
-（带 `"use client"` 的文件）渲染它。
+在 Next.js App Router 等 React 服务端组件环境中，应从带有 `'use client'` 的客户端组件渲染。
 
-## Props
+## 参数
 
-| Prop                     | 类型           | 默认值                      | 说明                                                                            |
-| ------------------------ | -------------- | --------------------------- | ------------------------------------------------------------------------------- |
-| `apiKey`                 | `string`       | —                           | 默认 API key。组件同时提供输入框，用户可粘贴/覆盖自己的 key。                   |
-| `baseUrl`                | `string`       | `https://api.stableops.dev` | StableOps API base URL，需浏览器可达且在 API 的 CORS 白名单内。                 |
-| `walletConnectProjectId` | `string`       | —                           | WalletConnect 二维码流程使用的 Reown projectId；未传时 WalletConnect 按钮禁用。 |
-| `locale`                 | `'en' \| 'zh'` | `'en'`                      | 界面语言。                                                                      |
-| `className`              | `string`       | —                           | 根容器额外类名。                                                                |
+| 参数                     | 类型             | 默认值                      | 说明                                              |
+| ------------------------ | ---------------- | --------------------------- | ------------------------------------------------- |
+| `apiKey`                 | `string`         | 无                          | 默认沙盒 API 密钥，用户也可在界面中输入或替换     |
+| `baseUrl`                | `string`         | `https://api.stableops.dev` | 浏览器可访问的 StableOps API 地址                 |
+| `walletConnectProjectId` | `string`         | 无                          | Reown 项目编号，未提供时 WalletConnect 按钮不可用 |
+| `locale`                 | `'en'` 或 `'zh'` | `'en'`                      | 界面语言                                          |
+| `className`              | `string`         | 无                          | 根容器的额外样式类                                |
 
-组件 UI 内还提供一个 **「自动导入 sandbox 收款地址」** 勾选框（默认开启）：开启时
-会在建单前导入一个确定性 burner sandbox 地址。适合 org 还没任何地址的场景。关闭后
-只使用你在 Dashboard → 收款地址 中维护的地址；若此时地址池为空导致建单失败，活动
-日志会给出指向 dashboard 的提示。
+## 演练流程
 
-## 工作原理
+1. 创建订单。默认开启「自动导入沙盒收款地址」，适合尚未添加收款地址的组织。关闭后使用你在控制台中维护的地址。
+2. 选择付款网络与资产，通过钱包签名并广播测试网转账，也可手动转账。
+3. 查询订单状态，依次观察 `detected`、`confirmed` 和 `finalized`。订单状态以 StableOps 返回的结果为准。
 
-1. **建单**：经 `@stableops/api-sdk` 调 `POST /v1/payment-orders`（带 `Idempotency-Key`）。
-   勾选「自动导入 sandbox 收款地址」（默认开启）时会先导入一个确定性 burner sandbox 地址，
-   供订单分配。
-2. **链上支付**：`@stableops/wallet-sdk` 选出可支付指令并唤起浏览器钱包发送
-   ERC-20 / SPL / TRC-20 转账。对于 EVM 和已支持的 Solana 指令，WalletConnect 按钮
-   会打开由 `createWalletConnectController()` 驱动的自定义钱包选择和二维码面板。
-   TRON WalletConnect 付款需先验证目标钱包的交易构造、签名和广播契约，当前仍使用
-   注入式 TronLink / TronWeb provider。
-3. **等待 confirmed / finalized**：轮询 `GET /v1/payment-orders/:id`，由 scanner 与
-   confirmations watcher 推进订单。
+自动导入的演示地址仅用于测试代币。真实资金必须使用你控制的地址。
 
-链下拉框展示的测试网目录内置于本包（`PlaygroundTestnets`），无需任何 playground 专用 API 端点。
+## 收银台与订阅组件
 
-## 独立运行 playground
+`Checkout` 创建托管收银台会话并打开付款页。`Subscription` 演示套餐、订阅、账单付款、套餐变更和用户门户会话。两者接受上面的全部参数，并额外支持 `checkoutUrl`，默认值为 `https://pay.stableops.dev`。
 
-包内自带 Vite dev harness，无需嵌入其他应用即可单独运行：
+```tsx
+import { Checkout, Subscription } from './src'
+import '@stableops/wallet-ui/walletconnect-dialog.css'
 
-```bash
-pnpm dev
+export function OtherDemos({ sandboxKey }: { sandboxKey: string }) {
+  return (
+    <>
+      <Checkout apiKey={sandboxKey} locale="zh" />
+      <Subscription apiKey={sandboxKey} locale="zh" />
+    </>
+  )
+}
 ```
 
-页面来自 `example/`（默认 http://localhost:5173）。用 `VITE_STABLEOPS_API_URL`
-指向不同 API（默认 `https://api.stableops.dev`），设置 `VITE_WALLETCONNECT_PROJECT_ID`
-可启用 WalletConnect，然后在界面里粘贴 sandbox API key。
+## 地址辅助函数
 
-## 许可
+`demoSandboxAddressForChain(chain, seed)` 异步返回确定性的测试收款地址。`importSandboxAddress({ apiKey, baseUrl, merchantOrderId, chains, fetchImpl? })` 为选中的链导入演示收款地址。
 
-本包基于 `Apache-2.0` 许可。见 [LICENSE](./LICENSE)。
+```ts
+import { demoSandboxAddressForChain, importSandboxAddress } from './src'
+
+const address = await demoSandboxAddressForChain('base-sepolia', 'demo-order-123')
+await importSandboxAddress({
+  apiKey: sandboxKey,
+  baseUrl: 'https://api.stableops.dev',
+  merchantOrderId: 'demo-order-123',
+  chains: ['base-sepolia'],
+})
+```
+
+这些函数只用于沙盒演示。前者返回地址，后者完成导入，不会发起付款。
+
+## 许可证
+
+本仓库使用 `Apache-2.0` 许可证，见 [LICENSE](./LICENSE)。

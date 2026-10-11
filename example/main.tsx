@@ -6,8 +6,8 @@ import { Playground, Checkout } from '../src'
 import './styles.css'
 import '@stableops/wallet-ui/walletconnect-dialog.css'
 
-// 独立运行入口（dev harness）：默认指向本地 API（先跑 `pnpm --filter @stableops/api dev`），
-// 可用环境变量 VITE_STABLEOPS_API_URL 覆盖。打开页面后在组件里粘贴 sandbox API key 即可。
+// 独立示例默认使用公开 API，也可通过 VITE_STABLEOPS_API_URL 覆盖。
+// 打开页面后输入沙盒 API 密钥即可演练。
 const baseUrl = import.meta.env.VITE_STABLEOPS_API_URL ?? 'https://api.stableops.dev'
 const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 const checkoutUrl = import.meta.env.VITE_CHECKOUT_URL ?? 'https://pay.stableops.dev'
@@ -28,7 +28,9 @@ function App() {
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">StableOps Playground</h1>
           <p className="text-sm text-muted-foreground">
-            Standalone dev harness — paste a sandbox API key and run the full payment flow against{' '}
+            {locale === 'zh'
+              ? '输入沙盒 API 密钥，演练完整付款流程。API 地址：'
+              : 'Enter a sandbox API key to try the full payment flow. API: '}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{baseUrl}</code>.
           </p>
         </div>
@@ -49,7 +51,7 @@ function App() {
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}>
-          {locale === 'zh' ? '支付 Playground' : 'Payment Playground'}
+          {locale === 'zh' ? '付款演练' : 'Payment Playground'}
         </button>
         <button
           type="button"
@@ -59,7 +61,7 @@ function App() {
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}>
-          {locale === 'zh' ? '收银台 Demo' : 'Checkout Demo'}
+          {locale === 'zh' ? '收银台演示' : 'Checkout Demo'}
         </button>
       </nav>
 

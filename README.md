@@ -2,6 +2,10 @@
 
 [中文文档](./README.zh-CN.md)
 
+This is a public example repository for StableOps sandbox integrations. It is not
+published to npm. Clone it to run the examples or reuse the React source in your
+application. The `@stableops/playground` name is retained for local workspace use.
+
 `@stableops/playground` renders a self-contained `<Playground>` widget that walks
 through the full lifecycle of a StableOps payment order **directly in the
 browser**: create order → pay on-chain with a wallet → wait for `confirmed` →
@@ -21,7 +25,7 @@ The caller supplies an API key (via prop or the built-in input field).
   (`--card`, `--muted`, `--primary`, …). The component renders with utility
   classes and reads those CSS variables for colors. Make sure Tailwind scans
   this package, e.g. in your global stylesheet:
-  `@source '../node_modules/@stableops/playground/dist/**/*.js';`
+  `@source './path/to/playground/src/**/*.{ts,tsx}';`
 - A StableOps **sandbox** API key (see Security).
 
 ## Security
@@ -36,16 +40,30 @@ the StableOps API from the browser, so:
 - In production integrations, keep your API key on your backend and use
   `@stableops/wallet-sdk` on the frontend only for the wallet transfer.
 
-## Installation
+## Run the examples
+
+Use Node.js 22.12 or newer and pnpm 10.33.2.
 
 ```bash
-pnpm add @stableops/playground @stableops/api-sdk @stableops/wallet-sdk @walletconnect/universal-provider react react-dom
+git clone https://github.com/StableOps/stableops-playground.git
+cd stableops-playground
+pnpm install
+pnpm dev
 ```
+
+Open http://localhost:5173 and enter a sandbox API key. The example includes the
+Solana and TRON dependencies. For WalletConnect, set `VITE_WALLETCONNECT_PROJECT_ID`
+in a local `.env` file before starting the example. `VITE_STABLEOPS_API_URL` and
+`VITE_CHECKOUT_URL` can override the default API and hosted checkout URLs.
+
+Run `pnpm build:example` and `pnpm preview` to check the built example.
+In the StableOps monorepo, run `pnpm --filter @stableops/playground dev` from the root.
 
 ## Usage
 
 ```tsx
-import { Playground } from '@stableops/playground'
+import { Playground } from './src'
+import '@stableops/wallet-ui/walletconnect-dialog.css'
 
 export function Demo() {
   return (
@@ -62,6 +80,10 @@ export function Demo() {
 
 In a React Server Components host (e.g. Next.js App Router), render it from a
 client component (a file with `"use client"`).
+
+Import the WalletConnect stylesheet once in your host application. Tailwind
+scanning alone does not load the dialog styles. Solana requires `@solana/web3.js`
+and TRON WalletConnect requires `tronweb`. These are included in the example.
 
 ## Props
 
@@ -87,31 +109,36 @@ a hint pointing at the dashboard.
    deterministic burner sandbox address is imported first so the order can
    allocate one.
 2. **Pay on-chain**: `@stableops/wallet-sdk` selects a payable instruction and
-   asks the browser wallet to send the ERC-20 / SPL / TRC-20 transfer. For EVM
-   and supported Solana instructions, the WalletConnect button opens a custom
-   wallet picker and QR panel driven by `createWalletConnectController()`. TRON
-   WalletConnect payments remain disabled until a target wallet's transaction
-   construction, signing, and broadcast contract is verified; TRON still uses
-   injected TronLink / TronWeb providers.
+   asks the browser wallet to send the ERC-20 / SPL / TRC-20 transfer. For EVM,
+   Solana, and TRON instructions, WalletConnect opens a wallet picker and QR
+   panel. TRON WalletConnect requires `tronweb` and a wallet supporting
+   `tron_signTransaction`. Injected TronLink / TronWeb wallets are also supported.
 3. **Wait confirmed / finalized**: polls `GET /v1/payment-orders/:id` while the
    scanner and confirmations watcher advance the order.
 
 The testnet catalog shown in the chain dropdown is bundled in the package
 (`PlaygroundTestnets`); no playground-specific API endpoint is required.
 
-## Run the standalone playground
+## Other exports
 
-This package ships a Vite dev harness so you can run the widget on its own,
-without embedding it in another app:
+`Checkout` creates a hosted checkout session and opens its payment page.
+`Subscription` demonstrates plans, subscriptions, invoice payment, plan changes,
+and end-user portal sessions. Both accept the same props as `Playground`, plus
+`checkoutUrl` (default `https://pay.stableops.dev`). They are sandbox demos.
 
-```bash
-pnpm dev
+```tsx
+import { Checkout, Subscription } from './src'
+import '@stableops/wallet-ui/walletconnect-dialog.css'
+
+<Checkout apiKey={sandboxKey} locale="en" />
+<Subscription apiKey={sandboxKey} locale="en" />
 ```
 
-It serves the page from `example/` (default http://localhost:5173). Point it at a
-different API with `VITE_STABLEOPS_API_URL` (defaults to `https://api.stableops.dev`),
-set `VITE_WALLETCONNECT_PROJECT_ID` to enable WalletConnect, then paste a sandbox API key in the UI.
+`demoSandboxAddressForChain(chain, seed)` asynchronously returns a deterministic
+test receiving address. `importSandboxAddress({ apiKey, baseUrl, merchantOrderId,
+chains, fetchImpl? })` imports demo receiving addresses for the selected chains.
+These addresses are only for test tokens. Use addresses you control for real funds.
 
 ## License
 
-This package is licensed under `Apache-2.0`. See [LICENSE](./LICENSE).
+This repository is licensed under `Apache-2.0`. See [LICENSE](./LICENSE).
